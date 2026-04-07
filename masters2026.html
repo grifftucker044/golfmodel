@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Masters 2026 — Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --green: #1a3a2a;
+  --green-mid: #2d5a3d;
+  --green-light: #3d7a52;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --cream: #f7f3ec;
+  --cream-dark: #ede7d9;
+  --text: #1a1a18;
+  --text-muted: #5a5a52;
+  --text-light: #8a8a80;
+  --white: #ffffff;
+  --red: #8b1a1a;
+  --border: rgba(26,58,42,0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* HEADER */
+header {
+  background: var(--green);
+  color: var(--white);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 40px,
+    rgba(255,255,255,0.015) 40px,
+    rgba(255,255,255,0.015) 41px
+  );
+}
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 32px 40px;
+  position: relative;
+}
+.header-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--gold);
+}
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 6vw, 68px);
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -0.01em;
+  margin-bottom: 16px;
+}
+h1 em {
+  font-style: italic;
+  color: var(--gold-light);
+}
+.header-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  font-weight: 300;
+  max-width: 480px;
+  line-height: 1.6;
+}
+.header-meta {
+  display: flex;
+  gap: 32px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.meta-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+.meta-val {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gold-light);
+}
+
+/* WEATHER STRIP */
+.weather-strip {
+  background: var(--green-mid);
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+}
+.weather-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.weather-day {
+  padding: 16px 20px;
+  cursor: pointer;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  transition: background 0.15s;
+  position: relative;
+}
+.weather-day:last-child { border-right: none; }
+.weather-day:hover { background: rgba(255,255,255,0.05); }
+.weather-day.active { background: rgba(201,168,76,0.1); }
+.weather-day.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gold);
+}
+.wd-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 6px;
+}
+.wd-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wd-temp {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  color: var(--white);
+  line-height: 1;
+}
+.wd-icon { font-size: 18px; }
+.wd-detail {
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.wd-wind {
+  display: inline-block;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+.wind-high { background: rgba(201,168,76,0.25); color: var(--gold-light); }
+.wind-low { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+
+/* MAIN LAYOUT */
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 32px 80px;
+}
+
+/* TABS */
+.tab-row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.tab-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  color: var(--text-light);
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.tab-btn:hover { color: var(--text-muted); }
+.tab-btn.active { color: var(--green); }
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; left: 0; right: 0;
+  height: 2px;
+  background: var(--gold);
+}
+
+/* CONTROLS */
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ctrl-input {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  flex: 1;
+  min-width: 160px;
+}
+.ctrl-input:focus { border-color: var(--green-light); }
+.ctrl-select {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+thead th {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  font-weight: 500;
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+thead th:hover { color: var(--text-muted); }
+tbody tr {
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  transition: background 0.1s;
+}
+tbody tr:hover { background: rgba(26,58,42,0.035); }
+td { padding: 10px 12px; vertical-align: middle; }
+.td-rank {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-light);
+  width: 36px;
+  font-weight: 500;
+}
+.td-rank.top3 { color: var(--gold); }
+.player-cell { display: flex; align-items: center; gap: 6px; }
+.player-flag { font-size: 16px; line-height: 1; }
+.player-name { font-weight: 500; font-size: 14px; color: var(--text); }
+.badge {
+  display: inline-block;
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+.badge-green { background: #e0f0e8; color: #1a5c35; }
+.badge-gold { background: rgba(201,168,76,0.15); color: #8a6a1a; }
+.badge-blue { background: #e5edf8; color: #1a3f8a; }
+.badge-red { background: #fce8e8; color: #8b1a1a; }
+.badge-gray { background: #ebebeb; color: #5a5a52; }
+.prob-cell { display: flex; align-items: center; gap: 8px; }
+.prob-bar-bg {
+  height: 4px;
+  background: var(--cream-dark);
+  border-radius: 2px;
+  width: 80px;
+  flex-shrink: 0;
+}
+.prob-bar-fill { height: 4px; border-radius: 2px; background: var(--green-light); }
+.prob-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: 38px;
+  color: var(--text);
+}
+.odds-cell {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--green-mid);
+  font-weight: 500;
+}
+.stat-good { color: #1a5c35; font-weight: 500; }
+.stat-mid { color: #7a5a10; }
+.stat-bad { color: var(--red); }
+.stat-neu { color: var(--text-light); }
+.delta-up { color: #1a5c35; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; }
+.delta-dn { color: var(--red); font-family: 'DM Mono', monospace; font-size: 11px; }
+.delta-ne { color: var(--text-light); font-size: 11px; }
+
+/* CHART */
+.chart-wrap { position: relative; width: 100%; height: 320px; margin: 8px 0 32px; }
+
+/* BREAKDOWN */
+.bd-header {
+  background: var(--green);
+  color: var(--white);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.bd-name { font-family: 'Playfair Display', serif; font-size: 22px; }
+.bd-prob { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--gold-light); }
+.factor-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.factor-row:last-child { border-bottom: none; }
+.factor-info { flex: 1; }
+.factor-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+.factor-desc { font-size: 11px; color: var(--text-light); line-height: 1.5; }
+.factor-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.factor-bar-bg { height: 3px; width: 80px; background: var(--cream-dark); border-radius: 2px; }
+.factor-bar-fill { height: 3px; border-radius: 2px; background: var(--green-light); }
+.factor-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 28px;
+  text-align: right;
+}
+.factor-contrib {
+  font-size: 10px;
+  color: var(--text-light);
+  min-width: 52px;
+  text-align: right;
+}
+
+/* WEIGHTS */
+.weight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.weight-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.weight-label { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+.weight-sub { font-size: 10px; color: var(--text-light); margin-bottom: 10px; line-height: 1.4; }
+.weight-row { display: flex; align-items: center; gap: 10px; }
+.weight-row input[type=range] {
+  flex: 1;
+  accent-color: var(--green-mid);
+  cursor: pointer;
+}
+.weight-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: right;
+}
+.reset-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 8px 20px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.reset-btn:hover { background: var(--cream-dark); }
+
+/* FOOTER */
+footer {
+  background: var(--green);
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+  padding: 24px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  font-family: 'DM Mono', monospace;
+}
+footer span { color: var(--gold); }
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .header-inner { padding: 32px 20px 28px; }
+  .main { padding: 20px 16px 60px; }
+  .weather-inner { grid-template-columns: repeat(2,1fr); }
+  .hide-sm { display: none; }
+  .bd-header { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-eyebrow">Augusta National · April 9–12, 2026</div>
+    <h1>Masters<br><em>Predictor</em></h1>
+    <p class="header-sub">12-factor predictive model. Adjust weights, explore player profiles, and track how weather shapes the leaderboard across all four rounds.</p>
+    <div class="header-meta">
+      <div class="meta-item"><span class="meta-label">Model factors</span><span class="meta-val">12</span></div>
+      <div class="meta-item"><span class="meta-label">Players</span><span class="meta-val">25</span></div>
+      <div class="meta-item"><span class="meta-label">Edition</span><span class="meta-val">90th Masters</span></div>
+      <div class="meta-item"><span class="meta-label">Defending</span><span class="meta-val">Rory McIlroy</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="weather-strip">
+  <div class="weather-inner" id="weather-days">
+    <div class="weather-day active" onclick="selectDay(0)">
+      <div class="wd-label">Thu · Round 1</div>
+      <div class="wd-row"><span class="wd-temp">74°</span><span class="wd-icon">⛅</span></div>
+      <div class="wd-detail">ENE 10–15 mph · gusts to 20</div>
+      <span class="wd-wind wind-high">Breezy</span>
+    </div>
+    <div class="weather-day" onclick="selectDay(1)">
+      <div class="wd-label">Fri · Round 2</div>
+      <div class="wd-row"><span class="wd-temp">79°</span><span class="wd-icon">☀️</span></div>
+      <div class="wd-detail">E 6–12 mph · 0% rain</div>
+      <span class="wd-wind wind-low">Calm</span>
+    </div>
+    <div class="weather-day" onclick="selectDay(2)">
+      <div class="wd-label">Sat · Round 3</div>
+      <div class="wd-row"><span class="wd-temp">83°</span><span class="wd-icon">☀️</span></div>
+      <div class="wd-detail">NE 4–8 mph · 0% rain</div>
+      <span class="wd-wind wind-low">Light</span>
+    </div>
+    <div class="weather-day" onclick="selectDay(3)">
+      <div class="wd-label">Sun · Round 4</div>
+      <div class="wd-row"><span class="wd-temp">85°</span><span class="wd-icon">🌤️</span></div>
+      <div class="wd-detail">SE 5–10 mph · 0% rain</div>
+      <span class="wd-wind wind-low">Ideal</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tab-row" id="tabs">
+    <button class="tab-btn active" onclick="setTab('leaderboard')">Leaderboard</button>
+    <button class="tab-btn" onclick="setTab('breakdown')">Factor breakdown</button>
+    <button class="tab-btn" onclick="setTab('weather')">Weather impact</button>
+    <button class="tab-btn" onclick="setTab('weights')">Adjust model</button>
+    <button class="tab-btn" onclick="setTab('chart')">Chart</button>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div id="view-leaderboard">
+    <div class="controls">
+      <input class="ctrl-input" id="srch" type="text" placeholder="Search player…" oninput="renderLB()"/>
+      <select class="ctrl-select" id="filt" onchange="renderLB()">
+        <option value="all">All players</option>
+        <option value="top10">Top 10</option>
+        <option value="sleeper">Sleepers (+3000+)</option>
+        <option value="liv">LIV players</option>
+        <option value="debut">Debutants</option>
+      </select>
+      <select class="ctrl-select" id="srt" onchange="renderLB()">
+        <option value="model">Sort: Model score</option>
+        <option value="amenCorner">Sort: Amen Corner</option>
+        <option value="par5">Sort: Par-5 scoring</option>
+        <option value="majorClutch">Sort: Major clutch</option>
+        <option value="name">Sort: Name A–Z</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Win prob</th>
+            <th class="hide-sm">Odds</th>
+            <th class="hide-sm">Par 5s</th>
+            <th class="hide-sm">Amen ∠</th>
+            <th class="hide-sm">Clutch</th>
+            <th class="hide-sm">Wthr fit</th>
+          </tr>
+        </thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BREAKDOWN -->
+  <div id="view-breakdown" style="display:none">
+    <div class="controls">
+      <select class="ctrl-select" id="sel-player" onchange="renderBreakdown()" style="min-width:220px"></select>
+    </div>
+    <div id="breakdown-content"></div>
+  </div>
+
+  <!-- WEATHER -->
+  <div id="view-weather" style="display:none">
+    <div class="controls">
+      <select class="ctrl-select" id="weather-filt" onchange="renderWeather()">
+        <option value="all">All players</option>
+        <option value="top15">Top 15</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Player</th>
+            <th>Adj win %</th>
+            <th class="hide-sm">vs base</th>
+            <th class="hide-sm">Wind game</th>
+            <th class="hide-sm">Heat/firm</th>
+            <th class="hide-sm">Round edge</th>
+          </tr>
+        </thead>
+        <tbody id="weather-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- WEIGHTS -->
+  <div id="view-weights" style="display:none">
+    <p style="font-size:13px;color:var(--text-light);margin-bottom:20px;line-height:1.6">Drag sliders to re-weight model factors. The leaderboard and chart update live.</p>
+    <div class="weight-grid" id="weight-grid"></div>
+    <button class="reset-btn" onclick="resetWeights()">Reset to defaults</button>
+  </div>
+
+  <!-- CHART -->
+  <div id="view-chart" style="display:none">
+    <div class="chart-wrap">
+      <canvas id="mainChart" role="img" aria-label="Bar chart of win probabilities for top 15 Masters 2026 contenders">Top 15 Masters win probabilities.</canvas>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Masters 2026 Predictor &nbsp;·&nbsp; <span>12-factor model</span> &nbsp;·&nbsp; Data sourced from public PGA Tour stats, DraftKings odds & Golf Channel analytics &nbsp;·&nbsp; For entertainment only
+</footer>
+
+<script>
+// ── DATA ───────────────────────────────────────────────────────────────
+const FACTORS = [
+  { key:'sgApproach',    label:'SG: Approach (Augusta)',       desc:'Most decisive single stat — controls scoring variance more than any other at Augusta. Six of eight recent winners ranked top-5 that week.',   def:18 },
+  { key:'par5',          label:'Par-5 scoring',                desc:'9 of 10 recent champions went double-digits under par on par 5s. Holes 2, 8, 13, 15 decide the tournament.',                                  def:15 },
+  { key:'amenCorner',    label:'Amen Corner (11–12–13)',       desc:'Only Sergio Garcia won while being over-par here. Composure on 12 is the single most tournament-deciding moment every year.',                  def:14 },
+  { key:'augustaHist',   label:'Augusta course history',       desc:'Average champion is in their 9th start. Same course every year uniquely rewards course memory and adapted strategy.',                          def:10 },
+  { key:'majorClutch',   label:'Major clutch factor',          desc:'Performance in majors vs regular tour events. Scheffler and Koepka dramatically outperform their standard stats in major weeks.',              def:10 },
+  { key:'recentForm',    label:'Recent form (2026)',           desc:'12 of 13 recent champs had at least one top-5 that season. Momentum is measurable and predictive.',                                            def:9  },
+  { key:'sgTTG',         label:'SG: Tee-to-green',            desc:'McIlroy led the entire field in this metric in his 2025 win. Approach play alone is not enough — full ball-striking package matters.',          def:7  },
+  { key:'weather',       label:'Weather fit (this week)',      desc:'Breezy R1 rewards wind players. Hot, calm weekend rewards power hitters on firm fairways. Fast greens on Sunday suit precision iron players.',  def:6  },
+  { key:'shortGame',     label:'Around-the-green / scrambling',desc:'Augusta runoff areas and tight mown areas demand elite chipping. Reed and Matsuyama are historically the best at this.',                       def:6  },
+  { key:'bogeyAvoid',    label:'Bogey avoidance',              desc:'Fewest bogeys at Amen Corner historically has the strongest green jacket claim. Augusta punishes mistakes more than it rewards brilliance.',    def:5  },
+  { key:'drawBias',      label:'Draw bias / shot shape',       desc:'Right-to-left doglegs favour draw hitters. Lefties historically thrive — Mickelson 3×, Bubba 2×. McIlroy\'s draw is a weapon here.',          def:3  },
+  { key:'bettingSignal', label:'Betting market signal',        desc:'Sharp money movement 48hrs before the tournament captures practice-week intel not yet in public stats.',                                        def:2  },
+];
+
+const DAYS = [
+  { wind:13, heat:0, firm:0 },
+  { wind:9,  heat:1, firm:1 },
+  { wind:6,  heat:2, firm:2 },
+  { wind:7,  heat:2, firm:2 },
+];
+
+const PLAYERS = [
+  { name:'Scottie Scheffler', flag:'🇺🇸', odds:'+485',  liv:false, debut:false, badges:['2× champ'],
+    windBonus:1.2, heatBonus:0.5, firmBonus:0.8,
+    windGame:'Elite', hotFirm:'Very good',
+    sgApproach:9.8, par5:9.2, amenCorner:9.5, augustaHist:9.8, majorClutch:10,  recentForm:8.2, sgTTG:9.5, weather:7.8, shortGame:8.8, bogeyAvoid:9.5, drawBias:7, bettingSignal:8.5 },
+  { name:'Jon Rahm',          flag:'🇪🇸', odds:'+910',  liv:true,  debut:false, badges:['2023 champ'],
+    windBonus:1.8, heatBonus:0.2, firmBonus:0.5,
+    windGame:'World-class', hotFirm:'Average',
+    sgApproach:9.5, par5:8.8, amenCorner:8.5, augustaHist:8.5, majorClutch:9.2, recentForm:9.0, sgTTG:9.2, weather:9.0, shortGame:8.2, bogeyAvoid:8.2, drawBias:8, bettingSignal:7.5 },
+  { name:'Ludvig Åberg',      flag:'🇸🇪', odds:'+1650', liv:false, debut:false, badges:['#1 model'],
+    windBonus:0.8, heatBonus:0.9, firmBonus:1.1,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:9.0, par5:8.5, amenCorner:7.8, augustaHist:5.5, majorClutch:7.5, recentForm:9.2, sgTTG:9.0, weather:8.2, shortGame:7.8, bogeyAvoid:8.0, drawBias:7, bettingSignal:8.0 },
+  { name:'Matt Fitzpatrick',  flag:'🇬🇧', odds:'+2200', liv:false, debut:false, badges:['Valspar W'],
+    windBonus:0.6, heatBonus:0.7, firmBonus:0.9,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:9.3, par5:7.8, amenCorner:7.5, augustaHist:7.5, majorClutch:7.8, recentForm:9.5, sgTTG:9.5, weather:7.5, shortGame:8.0, bogeyAvoid:8.2, drawBias:7, bettingSignal:7.0 },
+  { name:'Bryson DeChambeau', flag:'🇺🇸', odds:'+1075', liv:true,  debut:false, badges:['2024 champ'],
+    windBonus:-0.5, heatBonus:1.4, firmBonus:1.6,
+    windGame:'Vulnerable', hotFirm:'Excellent',
+    sgApproach:8.0, par5:9.5, amenCorner:8.0, augustaHist:8.5, majorClutch:8.8, recentForm:8.0, sgTTG:8.5, weather:7.2, shortGame:7.5, bogeyAvoid:7.5, drawBias:6, bettingSignal:7.0 },
+  { name:'Rory McIlroy',      flag:'🇬🇧', odds:'+1150', liv:false, debut:false, badges:['Defending'],
+    windBonus:1.5, heatBonus:0.3, firmBonus:0.2,
+    windGame:'Excellent', hotFirm:'Average',
+    sgApproach:9.2, par5:8.0, amenCorner:8.2, augustaHist:8.8, majorClutch:8.5, recentForm:8.0, sgTTG:9.8, weather:8.8, shortGame:7.5, bogeyAvoid:7.8, drawBias:9, bettingSignal:7.5 },
+  { name:'Tommy Fleetwood',   flag:'🇬🇧', odds:'+2000', liv:false, debut:false, badges:[],
+    windBonus:1.4, heatBonus:0.1, firmBonus:-0.2,
+    windGame:'Outstanding', hotFirm:'Below avg',
+    sgApproach:8.8, par5:7.2, amenCorner:8.0, augustaHist:7.8, majorClutch:8.0, recentForm:8.8, sgTTG:8.5, weather:9.2, shortGame:8.2, bogeyAvoid:8.5, drawBias:8, bettingSignal:6.5 },
+  { name:'Xander Schauffele', flag:'🇺🇸', odds:'+2200', liv:false, debut:false, badges:['9th start'],
+    windBonus:0.6, heatBonus:0.7, firmBonus:0.9,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:8.5, par5:8.2, amenCorner:8.8, augustaHist:8.5, majorClutch:8.5, recentForm:8.5, sgTTG:8.8, weather:7.8, shortGame:8.5, bogeyAvoid:8.5, drawBias:7, bettingSignal:7.0 },
+  { name:'Collin Morikawa',   flag:'🇺🇸', odds:'+2500', liv:false, debut:false, badges:['#1 SG app'],
+    windBonus:1.0, heatBonus:0.4, firmBonus:0.6,
+    windGame:'Very good', hotFirm:'Average',
+    sgApproach:9.8, par5:7.5, amenCorner:7.0, augustaHist:7.5, majorClutch:8.8, recentForm:7.5, sgTTG:9.0, weather:7.5, shortGame:7.0, bogeyAvoid:7.8, drawBias:6, bettingSignal:6.5 },
+  { name:'Hideki Matsuyama',  flag:'🇯🇵', odds:'+2800', liv:false, debut:false, badges:['2021 champ'],
+    windBonus:0.3, heatBonus:0.6, firmBonus:0.8,
+    windGame:'Moderate', hotFirm:'Good',
+    sgApproach:8.8, par5:8.0, amenCorner:7.8, augustaHist:8.8, majorClutch:7.8, recentForm:7.8, sgTTG:8.5, weather:7.0, shortGame:9.2, bogeyAvoid:8.0, drawBias:7, bettingSignal:6.5 },
+  { name:'Akshay Bhatia',     flag:'🇺🇸', odds:'+5700', liv:false, debut:false, badges:['Lefty'],
+    windBonus:0.2, heatBonus:0.9, firmBonus:0.8,
+    windGame:'Moderate', hotFirm:'Good',
+    sgApproach:8.2, par5:7.8, amenCorner:7.2, augustaHist:5.0, majorClutch:7.0, recentForm:9.0, sgTTG:8.5, weather:7.5, shortGame:8.0, bogeyAvoid:7.5, drawBias:9, bettingSignal:6.0 },
+  { name:'Cameron Young',     flag:'🇺🇸', odds:'+2300', liv:false, debut:false, badges:['Players W'],
+    windBonus:-0.3, heatBonus:0.7, firmBonus:1.0,
+    windGame:'Below avg', hotFirm:'Good',
+    sgApproach:7.8, par5:8.5, amenCorner:7.5, augustaHist:6.5, majorClutch:7.5, recentForm:8.8, sgTTG:8.5, weather:7.0, shortGame:7.5, bogeyAvoid:7.5, drawBias:6, bettingSignal:7.5 },
+  { name:'Jordan Spieth',     flag:'🇺🇸', odds:'+4700', liv:false, debut:false, badges:['2015 champ'],
+    windBonus:0.4, heatBonus:-0.3, firmBonus:-0.8,
+    windGame:'Good', hotFirm:'Below avg',
+    sgApproach:7.5, par5:7.8, amenCorner:6.5, augustaHist:9.2, majorClutch:7.5, recentForm:7.2, sgTTG:7.5, weather:6.8, shortGame:9.0, bogeyAvoid:6.0, drawBias:7, bettingSignal:6.0 },
+  { name:'Brooks Koepka',     flag:'🇺🇸', odds:'+3700', liv:true,  debut:false, badges:[],
+    windBonus:0.8, heatBonus:0.5, firmBonus:0.6,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:8.0, par5:8.0, amenCorner:7.8, augustaHist:7.8, majorClutch:9.5, recentForm:7.5, sgTTG:8.0, weather:7.8, shortGame:7.5, bogeyAvoid:7.8, drawBias:6, bettingSignal:7.0 },
+  { name:'Chris Gotterup',    flag:'🇺🇸', odds:'+6500', liv:false, debut:true,  badges:['Hot'],
+    windBonus:-0.6, heatBonus:0.8, firmBonus:0.9,
+    windGame:'Below avg', hotFirm:'Good',
+    sgApproach:7.5, par5:8.0, amenCorner:6.5, augustaHist:2.0, majorClutch:6.5, recentForm:9.8, sgTTG:8.0, weather:6.5, shortGame:7.8, bogeyAvoid:7.0, drawBias:6, bettingSignal:7.0 },
+  { name:'Viktor Hovland',    flag:'🇳🇴', odds:'+4500', liv:false, debut:false, badges:[],
+    windBonus:0.5, heatBonus:-0.4, firmBonus:-0.6,
+    windGame:'Good', hotFirm:'Below avg',
+    sgApproach:8.0, par5:7.5, amenCorner:7.0, augustaHist:7.0, majorClutch:7.5, recentForm:7.2, sgTTG:8.5, weather:7.5, shortGame:5.5, bogeyAvoid:6.5, drawBias:6, bettingSignal:6.0 },
+  { name:'Nicolai Højgaard',  flag:'🇩🇰', odds:'+5500', liv:false, debut:false, badges:[],
+    windBonus:1.4, heatBonus:0.1, firmBonus:-0.2,
+    windGame:'Very good', hotFirm:'Average',
+    sgApproach:7.8, par5:7.5, amenCorner:6.0, augustaHist:5.0, majorClutch:7.0, recentForm:8.8, sgTTG:8.2, weather:8.0, shortGame:7.5, bogeyAvoid:7.0, drawBias:7, bettingSignal:6.5 },
+  { name:'Patrick Reed',      flag:'🇺🇸', odds:'+9000', liv:true,  debut:false, badges:['2018 champ'],
+    windBonus:0.5, heatBonus:0.3, firmBonus:0.4,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:7.2, par5:7.8, amenCorner:8.5, augustaHist:8.8, majorClutch:8.5, recentForm:7.5, sgTTG:7.0, weather:6.8, shortGame:9.5, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.5 },
+  { name:'Adam Scott',        flag:'🇦🇺', odds:'+7000', liv:false, debut:false, badges:['2013 champ'],
+    windBonus:0.4, heatBonus:0.4, firmBonus:0.5,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:8.0, par5:7.5, amenCorner:7.5, augustaHist:8.8, majorClutch:7.2, recentForm:7.0, sgTTG:8.0, weather:7.0, shortGame:8.0, bogeyAvoid:7.8, drawBias:8, bettingSignal:5.5 },
+  { name:'Justin Rose',       flag:'🇬🇧', odds:'+6000', liv:false, debut:false, badges:[],
+    windBonus:0.8, heatBonus:0.3, firmBonus:0.4,
+    windGame:'Very good', hotFirm:'Average',
+    sgApproach:8.2, par5:7.2, amenCorner:7.8, augustaHist:8.2, majorClutch:7.5, recentForm:7.8, sgTTG:8.0, weather:7.8, shortGame:7.5, bogeyAvoid:7.5, drawBias:8, bettingSignal:6.0 },
+  { name:'Shane Lowry',       flag:'🇮🇪', odds:'+7500', liv:false, debut:false, badges:[],
+    windBonus:1.3, heatBonus:0.1, firmBonus:0.0,
+    windGame:'Excellent', hotFirm:'Average',
+    sgApproach:7.5, par5:7.0, amenCorner:7.2, augustaHist:7.0, majorClutch:7.8, recentForm:7.0, sgTTG:7.5, weather:8.5, shortGame:7.8, bogeyAvoid:7.5, drawBias:8, bettingSignal:5.5 },
+  { name:'Patrick Cantlay',   flag:'🇺🇸', odds:'+8000', liv:false, debut:false, badges:[],
+    windBonus:0.5, heatBonus:0.6, firmBonus:0.7,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:7.8, par5:7.5, amenCorner:7.5, augustaHist:7.2, majorClutch:7.2, recentForm:7.8, sgTTG:7.8, weather:7.0, shortGame:8.0, bogeyAvoid:8.0, drawBias:7, bettingSignal:7.0 },
+  { name:'Max Homa',          flag:'🇺🇸', odds:'+5000', liv:false, debut:false, badges:[],
+    windBonus:0.5, heatBonus:0.5, firmBonus:0.6,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:7.5, par5:7.2, amenCorner:7.0, augustaHist:6.5, majorClutch:7.0, recentForm:7.5, sgTTG:7.5, weather:7.0, shortGame:7.8, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.0 },
+  { name:'Dustin Johnson',    flag:'🇺🇸', odds:'+20000',liv:true,  debut:false, badges:['2020 champ'],
+    windBonus:0.4, heatBonus:0.5, firmBonus:0.7,
+    windGame:'Good', hotFirm:'Good',
+    sgApproach:7.0, par5:8.5, amenCorner:7.5, augustaHist:8.5, majorClutch:8.0, recentForm:6.5, sgTTG:7.5, weather:7.0, shortGame:7.0, bogeyAvoid:7.0, drawBias:8, bettingSignal:5.5 },
+  { name:'Gary Woodland',     flag:'🇺🇸', odds:'+12500',liv:false, debut:false, badges:['Story'],
+    windBonus:0.5, heatBonus:0.4, firmBonus:0.5,
+    windGame:'Good', hotFirm:'Average',
+    sgApproach:6.8, par5:7.0, amenCorner:6.5, augustaHist:6.5, majorClutch:7.0, recentForm:7.8, sgTTG:7.0, weather:6.8, shortGame:6.8, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.5 },
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────
+let weights = {};
+FACTORS.forEach(f => weights[f.key] = f.def);
+let currentDay = 0, currentTab = 'leaderboard', chartInst = null;
+
+// ── MODEL ────────────────────────────────────────────────────────────────
+function composite(p) {
+  const total = FACTORS.reduce((s,f) => s + weights[f.key], 0);
+  return FACTORS.reduce((s,f) => s + (p[f.key] * weights[f.key] / total), 0);
+}
+function normalize(raw) {
+  const sum = raw.reduce((a,b) => a+b, 0);
+  const target = PLAYERS.reduce((s,p) => s + composite(p), 0) / PLAYERS.length * 3;
+  return raw.map(v => (v / sum) * target);
+}
+function getProbs() {
+  const raw = PLAYERS.map(p => Math.pow(composite(p), 3.5));
+  const sum = raw.reduce((a,b) => a+b, 0);
+  return raw.map(s => (s/sum)*100);
+}
+function getWeatherProbs() {
+  const d = DAYS[currentDay];
+  const raw = PLAYERS.map(p => {
+    const base = Math.pow(composite(p), 3.5);
+    const wBonus = d.wind > 10 ? p.windBonus : d.wind > 6 ? p.windBonus * 0.5 : 0;
+    const hBonus = p.heatBonus * d.heat * 0.35;
+    const fBonus = p.firmBonus * d.firm * 0.28;
+    return Math.max(0.01, base * (1 + (wBonus + hBonus + fBonus) * 0.04));
+  });
+  const sum = raw.reduce((a,b) => a+b, 0);
+  return raw.map(s => (s/sum)*100);
+}
+
+// ── NAV ──────────────────────────────────────────────────────────────────
+function setTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.tab-btn').forEach((el,i) =>
+    el.classList.toggle('active', ['leaderboard','breakdown','weather','weights','chart'][i] === t));
+  ['leaderboard','breakdown','weather','weights','chart'].forEach(id =>
+    document.getElementById('view-'+id).style.display = t===id ? '' : 'none');
+  if(t==='breakdown') initBreakdown();
+  if(t==='weights') renderWeights();
+  if(t==='chart') drawChart();
+  if(t==='weather') renderWeather();
+}
+
+function selectDay(d) {
+  currentDay = d;
+  document.querySelectorAll('.weather-day').forEach((el,i) => el.classList.toggle('active', i===d));
+  if(currentTab==='weather') renderWeather();
+}
+
+// ── LEADERBOARD ──────────────────────────────────────────────────────────
+function renderLB() {
+  const q = document.getElementById('srch').value.toLowerCase();
+  const f = document.getElementById('filt').value;
+  const s = document.getElementById('srt').value;
+  const probs = getProbs();
+  const rankOrder = [...PLAYERS].map((p,i) => ({p, prob:probs[i]})).sort((a,b) => b.prob-a.prob);
+  const rankMap = {}; rankOrder.forEach((x,i) => rankMap[x.p.name] = i+1);
+
+  let data = PLAYERS.map((p,i) => ({...p, prob:probs[i]})).filter(p => {
+    if(q && !p.name.toLowerCase().includes(q)) return false;
+    if(f==='liv' && !p.liv) return false;
+    if(f==='debut' && !p.debut) return false;
+    if(f==='sleeper' && parseInt(p.odds.replace('+','')) < 3000) return false;
+    return true;
+  });
+
+  data.sort((a,b) => s==='name' ? a.name.localeCompare(b.name) : s==='model' ? b.prob-a.prob : b[s]-a[s]);
+  if(f==='top10') data = data.sort((a,b) => b.prob-a.prob).slice(0,10);
+
+  const maxProb = Math.max(...data.map(d=>d.prob));
+
+  document.getElementById('lb-body').innerHTML = data.map(p => {
+    const rank = rankMap[p.name];
+    const bar = Math.round(p.prob / maxProb * 100);
+    const barCol = rank<=3 ? '#2d5a3d' : rank<=7 ? '#4a8a60' : '#7ab898';
+    const badges = p.badges.map(b => {
+      const cls = b.includes('champ')||b==='Defending'?'badge-green':b==='Hot'||b.includes('W')?'badge-gold':b==='Lefty'?'badge-blue':'badge-gray';
+      return `<span class="badge ${cls}">${b}</span>`;
+    }).join('');
+    const livBadge = p.liv ? `<span class="badge badge-gray">LIV</span>` : '';
+    const debutBadge = p.debut ? `<span class="badge badge-red">Debut</span>` : '';
+    const acCls = p.amenCorner>=8.5?'stat-good':p.amenCorner>=7?'stat-neu':'stat-bad';
+    const p5Cls = p.par5>=8.5?'stat-good':p.par5>=7.5?'stat-neu':'stat-bad';
+    const clCls = p.majorClutch>=9?'stat-good':p.majorClutch>=7.5?'stat-neu':'stat-bad';
+    const wtCls = p.weather>=8.5?'stat-good':p.weather>=7?'stat-neu':'stat-bad';
+    return `<tr>
+      <td class="td-rank ${rank<=3?'top3':''}">${rank}</td>
+      <td><div class="player-cell">
+        <span class="player-flag">${p.flag}</span>
+        <span class="player-name">${p.name}</span>
+        ${badges}${livBadge}${debutBadge}
+      </div></td>
+      <td><div class="prob-cell">
+        <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${bar}%;background:${barCol}"></div></div>
+        <span class="prob-num">${p.prob.toFixed(1)}%</span>
+      </div></td>
+      <td class="odds-cell hide-sm">${p.odds}</td>
+      <td class="hide-sm ${p5Cls}">${p.par5.toFixed(1)}</td>
+      <td class="hide-sm ${acCls}">${p.amenCorner.toFixed(1)}</td>
+      <td class="hide-sm ${clCls}">${p.majorClutch.toFixed(1)}</td>
+      <td class="hide-sm ${wtCls}">${p.weather.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── BREAKDOWN ────────────────────────────────────────────────────────────
+function initBreakdown() {
+  const sel = document.getElementById('sel-player');
+  if(sel.options.length > 0) { renderBreakdown(); return; }
+  const probs = getProbs();
+  [...PLAYERS].map((p,i)=>({p,prob:probs[i]})).sort((a,b)=>b.prob-a.prob).forEach(({p}) => {
+    const o = document.createElement('option');
+    o.value = p.name; o.textContent = p.name;
+    sel.appendChild(o);
+  });
+  renderBreakdown();
+}
+
+function renderBreakdown() {
+  const name = document.getElementById('sel-player').value;
+  const p = PLAYERS.find(x => x.name===name);
+  if(!p) return;
+  const probs = getProbs();
+  const prob = probs[PLAYERS.indexOf(p)];
+  const total = FACTORS.reduce((s,f) => s+weights[f.key], 0);
+
+  const rows = FACTORS.map(f => {
+    const v = p[f.key];
+    const contrib = (v * weights[f.key] / total);
+    const cls = v>=8.5?'stat-good':v>=7?'stat-neu':'stat-bad';
+    const barW = Math.round(v * 8.5);
+    const wPct = Math.round(weights[f.key]/total*100);
+    return `<div class="factor-row">
+      <div class="factor-info">
+        <div class="factor-name">${f.label} <span style="font-size:10px;color:var(--text-light);font-weight:400">(${wPct}% weight)</span></div>
+        <div class="factor-desc">${f.desc}</div>
+      </div>
+      <div class="factor-right">
+        <div class="factor-bar-bg"><div class="factor-bar-fill" style="width:${barW}px"></div></div>
+        <span class="factor-score ${cls}">${v.toFixed(1)}</span>
+        <span class="factor-contrib">+${contrib.toFixed(2)}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('breakdown-content').innerHTML = `
+    <div class="bd-header">
+      <div>
+        <div style="font-size:11px;opacity:.5;margin-bottom:4px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase">Player analysis</div>
+        <div class="bd-name">${p.flag} ${p.name}</div>
+        <div style="font-size:12px;opacity:.5;margin-top:4px">${p.odds} · ${p.liv?'LIV Golf':'PGA Tour'}${p.debut?' · Augusta debut':''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;opacity:.5;margin-bottom:4px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase">Win probability</div>
+        <div class="bd-prob">${prob.toFixed(1)}%</div>
+      </div>
+    </div>
+    ${rows}`;
+}
+
+// ── WEATHER ──────────────────────────────────────────────────────────────
+function renderWeather() {
+  const filt = document.getElementById('weather-filt').value;
+  const baseProbs = getProbs();
+  const adjProbs = getWeatherProbs();
+  const dayLabels = ['Thu R1 — Breezy','Fri R2 — Warm','Sat R3 — Hot & calm','Sun R4 — Hot & fast'];
+  const windRating = ['Elite','Outstanding','Excellent','Very good'].includes;
+
+  let data = PLAYERS.map((p,i) => ({...p, base:baseProbs[i], adj:adjProbs[i], delta:adjProbs[i]-baseProbs[i]}))
+    .sort((a,b) => b.adj-a.adj);
+  if(filt==='top15') data = data.slice(0,15);
+
+  const maxAdj = Math.max(...data.map(d=>d.adj));
+  document.getElementById('weather-body').innerHTML = data.map((p,i) => {
+    const bar = Math.round(p.adj/maxAdj*100);
+    const delta = p.delta;
+    const deltaHtml = Math.abs(delta)<0.15 ? `<span class="delta-ne">—</span>` :
+      delta>0 ? `<span class="delta-up">▲ +${delta.toFixed(1)}%</span>` :
+                `<span class="delta-dn">▼ ${delta.toFixed(1)}%</span>`;
+    const dIdx = currentDay;
+    const edge = dIdx===0&&['World-class','Outstanding','Excellent'].includes(p.windGame)?'💨 Wind edge':
+                 dIdx>=2&&p.hotFirm==='Excellent'?'🌡️ Power edge':
+                 p.amenCorner>=8.5?'🎯 Amen Corner':
+                 p.shortGame>=8.8?'🏌️ Short game':'—';
+    return `<tr>
+      <td class="td-rank ${i<3?'top3':''}">${i+1}</td>
+      <td><div class="player-cell"><span class="player-flag">${p.flag}</span><span class="player-name">${p.name}</span></div></td>
+      <td><div class="prob-cell">
+        <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${bar}%"></div></div>
+        <span class="prob-num">${p.adj.toFixed(1)}%</span>
+      </div></td>
+      <td class="hide-sm">${deltaHtml}</td>
+      <td class="hide-sm" style="font-size:12px;color:var(--text-muted)">${p.windGame}</td>
+      <td class="hide-sm" style="font-size:12px;color:var(--text-muted)">${p.hotFirm}</td>
+      <td class="hide-sm" style="font-size:12px;color:var(--text-muted)">${edge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── WEIGHTS ──────────────────────────────────────────────────────────────
+function renderWeights() {
+  const total = FACTORS.reduce((s,f) => s+weights[f.key], 0);
+  document.getElementById('weight-grid').innerHTML = FACTORS.map(f => {
+    const pct = Math.round(weights[f.key]/total*100);
+    return `<div class="weight-card">
+      <div class="weight-label">${f.label}</div>
+      <div class="weight-sub">${f.desc}</div>
+      <div class="weight-row">
+        <input type="range" min="0" max="30" step="1" value="${weights[f.key]}"
+          oninput="updateWeight('${f.key}',+this.value,this)"/>
+        <span class="weight-pct" id="wpct-${f.key}">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateWeight(key, val) {
+  weights[key] = val;
+  const total = FACTORS.reduce((s,f) => s+weights[f.key], 0);
+  FACTORS.forEach(f => {
+    const el = document.getElementById('wpct-'+f.key);
+    if(el) el.textContent = Math.round(weights[f.key]/total*100)+'%';
+  });
+  renderLB();
+  if(currentTab==='breakdown') renderBreakdown();
+  if(currentTab==='chart') drawChart();
+}
+
+function resetWeights() {
+  FACTORS.forEach(f => weights[f.key] = f.def);
+  renderWeights();
+  renderLB();
+  if(currentTab==='chart') drawChart();
+}
+
+// ── CHART ────────────────────────────────────────────────────────────────
+function drawChart() {
+  const probs = getProbs();
+  const sorted = [...PLAYERS].map((p,i)=>({name:p.name.split(' ').pop(), full:p.name, prob:probs[i]}))
+    .sort((a,b)=>b.prob-a.prob).slice(0,15);
+
+  if(chartInst){chartInst.destroy();chartInst=null;}
+  chartInst = new Chart(document.getElementById('mainChart'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(p=>p.name),
+      datasets:[{
+        label: 'Win probability (%)',
+        data: sorted.map(p=>+p.prob.toFixed(1)),
+        backgroundColor: sorted.map((_,i)=>i<1?'#1a3a2a':i<3?'#2d5a3d':i<7?'#4a8a60':'#a0c8a8'),
+        borderRadius: 4,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            title: items => sorted[items[0].dataIndex].full,
+            label: c => `Win probability: ${c.raw}%`
+          }
+        }
+      },
+      scales:{
+        y:{beginAtZero:true, ticks:{callback:v=>v+'%', font:{size:11, family:'DM Mono'}}, grid:{color:'rgba(0,0,0,0.04)'}},
+        x:{ticks:{font:{size:10, family:'DM Mono'}, maxRotation:45, autoSkip:false}, grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+renderLB();
+</script>
+</body>
+</html>
