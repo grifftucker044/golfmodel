@@ -3,611 +3,387 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Masters 2026 — Predictor</title>
+<title>Masters 2026 — Full Model v4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-:root {
-  --green: #1a3a2a;
-  --green-mid: #2d5a3d;
-  --green-light: #3d7a52;
-  --gold: #c9a84c;
-  --gold-light: #e8c97a;
-  --cream: #f7f3ec;
-  --cream-dark: #ede7d9;
-  --text: #1a1a18;
-  --text-muted: #5a5a52;
-  --text-light: #8a8a80;
-  --white: #ffffff;
-  --red: #8b1a1a;
-  --border: rgba(26,58,42,0.12);
+:root{
+  --green:#1a3a2a;--green-mid:#2d5a3d;--green-light:#3d7a52;
+  --gold:#c9a84c;--gold-light:#e8c97a;
+  --cream:#f7f3ec;--cream-dark:#ede7d9;
+  --text:#1a1a18;--text-muted:#5a5a52;--text-light:#8a8a80;
+  --white:#ffffff;--red:#8b1a1a;--amber:#7a5a10;
+  --border:rgba(26,58,42,0.12);
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── HEADER ── */
+header{background:var(--green);color:var(--white);position:relative;overflow:hidden}
+header::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(255,255,255,.015) 40px,rgba(255,255,255,.015) 41px)}
+.hdr{max-width:1160px;margin:0 auto;padding:44px 32px 36px;position:relative}
+.eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:'';width:24px;height:1px;background:var(--gold)}
+h1{font-family:'Playfair Display',serif;font-size:clamp(32px,5.5vw,62px);font-weight:700;line-height:1;letter-spacing:-.01em;margin-bottom:14px}
+h1 em{font-style:italic;color:var(--gold-light)}
+.hsub{font-size:13px;color:rgba(255,255,255,.5);font-weight:300;max-width:560px;line-height:1.65}
+.hmeta{display:flex;gap:28px;margin-top:24px;flex-wrap:wrap}
+.hmi{display:flex;flex-direction:column;gap:3px}
+.hml{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.32)}
+.hmv{font-size:13px;font-weight:500;color:var(--gold-light)}
+.v4tag{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--gold-light);font-weight:500;margin-top:16px}
 
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--cream);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+/* ── WEATHER STRIP ── */
+.wstrip{background:var(--green-mid);border-bottom:1px solid rgba(201,168,76,.2)}
+.winner{max-width:1160px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr)}
+.wday{padding:14px 18px;cursor:pointer;border-right:1px solid rgba(255,255,255,.07);transition:background .15s;position:relative}
+.wday:last-child{border-right:none}
+.wday:hover{background:rgba(255,255,255,.05)}
+.wday.active{background:rgba(201,168,76,.1)}
+.wday.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold)}
+.wdl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:5px}
+.wdrow{display:flex;align-items:center;gap:7px}
+.wdt{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);line-height:1}
+.wdicon{font-size:16px}
+.wdd{font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;line-height:1.4}
+.wpill{display:inline-block;font-size:9px;padding:2px 7px;border-radius:4px;margin-top:3px;font-weight:500}
+.wp-hi{background:rgba(201,168,76,.25);color:var(--gold-light)}
+.wp-lo{background:rgba(255,255,255,.08);color:rgba(255,255,255,.45)}
 
-/* HEADER */
-header {
-  background: var(--green);
-  color: var(--white);
-  padding: 0;
-  position: relative;
-  overflow: hidden;
-}
-header::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 40px,
-    rgba(255,255,255,0.015) 40px,
-    rgba(255,255,255,0.015) 41px
-  );
-}
-.header-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 48px 32px 40px;
-  position: relative;
-}
-.header-eyebrow {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.header-eyebrow::before {
-  content: '';
-  display: inline-block;
-  width: 24px;
-  height: 1px;
-  background: var(--gold);
-}
-h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(36px, 6vw, 68px);
-  font-weight: 700;
-  line-height: 1.0;
-  letter-spacing: -0.01em;
-  margin-bottom: 16px;
-}
-h1 em {
-  font-style: italic;
-  color: var(--gold-light);
-}
-.header-sub {
-  font-size: 14px;
-  color: rgba(5,5,5,0.55);
-  font-weight: 300;
-  max-width: 480px;
-  line-height: 1.6;
-}
-.header-meta {
-  display: flex;
-  gap: 32px;
-  margin-top: 32px;
-  flex-wrap: wrap;
-}
-.meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.meta-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: rgba(5,255,255,0.35);
-}
-.meta-val {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gold-light);
-}
+/* ── MAIN ── */
+.main{max-width:1160px;margin:0 auto;padding:28px 32px 80px}
 
-/* WEATHER STRIP */
-.weather-strip {
-  background: var(--green-mid);
-  border-bottom: 1px solid rgba(201,168,76,0.2);
-}
-.weather-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 32px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-}
-.weather-day {
-  padding: 16px 20px;
-  cursor: pointer;
-  border-right: 1px solid rgba(255,255,255,0.07);
-  transition: background 0.15s;
-  position: relative;
-}
-.weather-day:last-child { border-right: none; }
-.weather-day:hover { background: rgba(255,255,255,0.05); }
-.weather-day.active { background: rgba(201,168,76,0.1); }
-.weather-day.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--gold);
-}
-.wd-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 6px;
-}
-.wd-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.wd-temp {
-  font-family: 'Playfair Display', serif;
-  font-size: 22px;
-  color: var(--white);
-  line-height: 1;
-}
-.wd-icon { font-size: 18px; }
-.wd-detail {
-  font-size: 10px;
-  color: rgba(255,255,255,0.45);
-  margin-top: 4px;
-  line-height: 1.5;
-}
-.wd-wind {
-  display: inline-block;
-  font-size: 9px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-top: 4px;
-  font-weight: 500;
-}
-.wind-high { background: rgba(201,168,76,0.25); color: var(--gold-light); }
-.wind-low { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+/* ── TABS ── */
+.tabrow{display:flex;gap:2px;margin-bottom:22px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tbtn{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;padding:9px 18px;border:none;background:none;color:var(--text-light);cursor:pointer;position:relative;white-space:nowrap;transition:color .15s}
+.tbtn:hover{color:var(--text-muted)}
+.tbtn.active{color:var(--green)}
+.tbtn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--gold)}
 
-/* MAIN LAYOUT */
-.main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 32px 32px 80px;
-}
+/* ── CONTROLS ── */
+.ctrls{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.cinput{font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 13px;border:1px solid var(--border);border-radius:6px;background:var(--white);color:var(--text);outline:none;flex:1;min-width:150px}
+.cinput:focus{border-color:var(--green-light)}
+.csel{font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 13px;border:1px solid var(--border);border-radius:6px;background:var(--white);color:var(--text);outline:none;cursor:pointer}
 
-/* TABS */
-.tab-row {
-  display: flex;
-  gap: 2px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-}
-.tab-btn {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 10px 20px;
-  border: none;
-  background: none;
-  color: var(--text-light);
-  cursor: pointer;
-  position: relative;
-  white-space: nowrap;
-  transition: color 0.15s;
-}
-.tab-btn:hover { color: var(--text-muted); }
-.tab-btn.active { color: var(--green); }
-.tab-btn.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px; left: 0; right: 0;
-  height: 2px;
-  background: var(--gold);
-}
+/* ── TABLE ── */
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-light);font-weight:500;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{color:var(--text-muted)}
+tbody tr{border-bottom:1px solid rgba(0,0,0,.04);transition:background .1s}
+tbody tr:hover{background:rgba(26,58,42,.03)}
+td{padding:9px 10px;vertical-align:middle}
+.rk{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-light);width:32px;font-weight:500}
+.rk.t3{color:var(--gold)}
+.pcell{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.pflag{font-size:15px;line-height:1}
+.pname{font-weight:500;font-size:13px}
+.bdg{display:inline-block;font-size:9px;padding:2px 6px;border-radius:14px;font-weight:500}
+.bdg-g{background:#e0f0e8;color:#1a5c35}
+.bdg-a{background:rgba(201,168,76,.15);color:#8a6a1a}
+.bdg-b{background:#e5edf8;color:#1a3f8a}
+.bdg-r{background:#fce8e8;color:#8b1a1a}
+.bdg-k{background:#ebebeb;color:#5a5a52}
+.bdg-inj{background:#fce8e8;color:#8b1a1a}
+.bdg-rust{background:#fff3e0;color:#7a5000}
+.pbarcell{display:flex;align-items:center;gap:6px}
+.pbbg{height:4px;background:var(--cream-dark);border-radius:2px;width:72px;flex-shrink:0}
+.pbfill{height:4px;border-radius:2px;background:var(--green-light)}
+.pnum{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;min-width:36px}
+.oddsc{font-family:'DM Mono',monospace;font-size:10px;color:var(--green-mid);font-weight:500}
+.sg{font-size:11px}
+.sg-g{color:#1a5c35;font-weight:500}
+.sg-m{color:var(--amber)}
+.sg-b{color:var(--red)}
+.sg-n{color:var(--text-light)}
 
-/* CONTROLS */
-.controls {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.ctrl-input {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  padding: 8px 14px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--white);
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s;
-  flex: 1;
-  min-width: 160px;
-}
-.ctrl-input:focus { border-color: var(--green-light); }
-.ctrl-select {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  padding: 8px 14px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--white);
-  color: var(--text);
-  outline: none;
-  cursor: pointer;
-}
+/* ── MONTE CARLO BADGE ── */
+.mc-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(26,58,42,.08);border:1px solid rgba(26,58,42,.15);border-radius:4px;padding:3px 8px;font-size:10px;color:var(--green-mid);font-weight:500;margin-bottom:14px}
 
-/* TABLE */
-.table-wrap { overflow-x: auto; }
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-thead th {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-light);
-  font-weight: 500;
-  padding: 8px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
-}
-thead th:hover { color: var(--text-muted); }
-tbody tr {
-  border-bottom: 1px solid rgba(0,0,0,0.04);
-  transition: background 0.1s;
-}
-tbody tr:hover { background: rgba(26,58,42,0.035); }
-td { padding: 10px 12px; vertical-align: middle; }
-.td-rank {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--text-light);
-  width: 36px;
-  font-weight: 500;
-}
-.td-rank.top3 { color: var(--gold); }
-.player-cell { display: flex; align-items: center; gap: 6px; }
-.player-flag { font-size: 16px; line-height: 1; }
-.player-name { font-weight: 500; font-size: 14px; color: var(--text); }
-.badge {
-  display: inline-block;
-  font-size: 9px;
-  padding: 2px 7px;
-  border-radius: 20px;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-}
-.badge-green { background: #e0f0e8; color: #1a5c35; }
-.badge-gold { background: rgba(201,168,76,0.15); color: #8a6a1a; }
-.badge-blue { background: #e5edf8; color: #1a3f8a; }
-.badge-red { background: #fce8e8; color: #8b1a1a; }
-.badge-gray { background: #ebebeb; color: #5a5a52; }
-.prob-cell { display: flex; align-items: center; gap: 8px; }
-.prob-bar-bg {
-  height: 4px;
-  background: var(--cream-dark);
-  border-radius: 2px;
-  width: 80px;
-  flex-shrink: 0;
-}
-.prob-bar-fill { height: 4px; border-radius: 2px; background: var(--green-light); }
-.prob-num {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  font-weight: 500;
-  min-width: 38px;
-  color: var(--text);
-}
-.odds-cell {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--green-mid);
-  font-weight: 500;
-}
-.stat-good { color: #1a5c35; font-weight: 500; }
-.stat-mid { color: #7a5a10; }
-.stat-bad { color: var(--red); }
-.stat-neu { color: var(--text-light); }
-.delta-up { color: #1a5c35; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; }
-.delta-dn { color: var(--red); font-family: 'DM Mono', monospace; font-size: 11px; }
-.delta-ne { color: var(--text-light); font-size: 11px; }
+/* ── RISK METER ── */
+.risk-cell{display:flex;align-items:center;gap:3px}
+.rdot{width:7px;height:7px;border-radius:50%}
 
-/* CHART */
-.chart-wrap { position: relative; width: 100%; height: 320px; margin: 8px 0 32px; }
+/* ── BREAKDOWN ── */
+.bdhdr{background:var(--green);color:var(--white);border-radius:10px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.bdname{font-family:'Playfair Display',serif;font-size:20px}
+.bdprob{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;color:var(--gold-light)}
+.frow{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.frow:last-child{border-bottom:none}
+.finfo{flex:1}
+.fname{font-size:12px;font-weight:500;margin-bottom:2px}
+.fdesc{font-size:10px;color:var(--text-light);line-height:1.5}
+.fright{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.fbarbg{height:3px;width:72px;background:var(--cream-dark);border-radius:2px}
+.fbarfill{height:3px;border-radius:2px;background:var(--green-light)}
+.fscore{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;min-width:26px;text-align:right}
+.fcontrib{font-size:10px;color:var(--text-light);min-width:48px;text-align:right}
+.penalty-note{font-size:10px;padding:3px 8px;border-radius:4px;background:#fce8e8;color:#8b1a1a;display:inline-block;margin-top:4px}
+.bonus-note{font-size:10px;padding:3px 8px;border-radius:4px;background:#e0f0e8;color:#1a5c35;display:inline-block;margin-top:4px}
 
-/* BREAKDOWN */
-.bd-header {
-  background: var(--green);
-  color: var(--white);
-  border-radius: 10px;
-  padding: 20px 24px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.bd-name { font-family: 'Playfair Display', serif; font-size: 22px; }
-.bd-prob { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--gold-light); }
-.factor-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-.factor-row:last-child { border-bottom: none; }
-.factor-info { flex: 1; }
-.factor-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
-.factor-desc { font-size: 11px; color: var(--text-light); line-height: 1.5; }
-.factor-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.factor-bar-bg { height: 3px; width: 80px; background: var(--cream-dark); border-radius: 2px; }
-.factor-bar-fill { height: 3px; border-radius: 2px; background: var(--green-light); }
-.factor-score {
-  font-family: 'DM Mono', monospace;
-  font-size: 13px;
-  font-weight: 500;
-  min-width: 28px;
-  text-align: right;
-}
-.factor-contrib {
-  font-size: 10px;
-  color: var(--text-light);
-  min-width: 52px;
-  text-align: right;
-}
+/* ── WEIGHTS ── */
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;margin-bottom:18px}
+.wcard{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.wlbl{font-size:11px;font-weight:500;margin-bottom:2px}
+.wsub{font-size:10px;color:var(--text-light);margin-bottom:8px;line-height:1.4}
+.wrow{display:flex;align-items:center;gap:8px}
+.wrow input[type=range]{flex:1;accent-color:var(--green-mid);cursor:pointer}
+.wpct{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);min-width:30px;text-align:right}
+.rbtn{font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 18px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer}
+.rbtn:hover{background:var(--cream-dark)}
 
-/* WEIGHTS */
-.weight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px; }
-.weight-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 16px;
-}
-.weight-label { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
-.weight-sub { font-size: 10px; color: var(--text-light); margin-bottom: 10px; line-height: 1.4; }
-.weight-row { display: flex; align-items: center; gap: 10px; }
-.weight-row input[type=range] {
-  flex: 1;
-  accent-color: var(--green-mid);
-  cursor: pointer;
-}
-.weight-pct {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--text-muted);
-  min-width: 32px;
-  text-align: right;
-}
-.reset-btn {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  padding: 8px 20px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.reset-btn:hover { background: var(--cream-dark); }
+/* ── WEATHER VIEW ── */
+.weath-delta-up{color:#1a5c35;font-family:'DM Mono',monospace;font-size:10px;font-weight:500}
+.weath-delta-dn{color:var(--red);font-family:'DM Mono',monospace;font-size:10px}
+.weath-delta-ne{color:var(--text-light);font-size:10px}
 
-/* FOOTER */
-footer {
-  background: var(--green);
-  color: rgba(255,255,255,0.35);
-  text-align: center;
-  padding: 24px;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  font-family: 'DM Mono', monospace;
-}
-footer span { color: var(--gold); }
+/* ── ACCURACY ── */
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:24px}
+.acard{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.albl{font-size:10px;color:var(--text-light);margin-bottom:5px;font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+.aval{font-family:'Playfair Display',serif;font-size:26px;font-weight:600;color:var(--green)}
+.asub{font-size:10px;color:var(--text-light);margin-top:3px;line-height:1.5}
 
-/* RESPONSIVE */
-@media (max-width: 700px) {
-  .header-inner { padding: 32px 20px 28px; }
-  .main { padding: 20px 16px 60px; }
-  .weather-inner { grid-template-columns: repeat(2,1fr); }
-  .hide-sm { display: none; }
-  .bd-header { flex-direction: column; }
+/* ── CHART ── */
+.chwrap{position:relative;width:100%;height:310px;margin:6px 0 28px}
+
+/* ── SECTION HEADING ── */
+.shd{font-size:10px;font-weight:500;color:var(--text-light);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px;font-family:'DM Mono',monospace}
+
+footer{background:var(--green);color:rgba(255,255,255,.32);text-align:center;padding:22px;font-size:10px;letter-spacing:.05em;font-family:'DM Mono',monospace}
+footer span{color:var(--gold)}
+
+@media(max-width:680px){
+  .hdr{padding:32px 18px 26px}
+  .main{padding:18px 14px 60px}
+  .winner{grid-template-columns:repeat(2,1fr)}
+  .hs{display:none}
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-inner">
-    <div class="header-eyebrow">Augusta National · April 9–12, 2026</div>
-    <h1>Masters<br><em>Predictor</em></h1>
-    <p class="header-sub">12-factor predictive model. Adjust weights, explore player profiles, and track how weather shapes the leaderboard across all four rounds.</p>
-    <div class="header-meta">
-      <div class="meta-item"><span class="meta-label">Model factors</span><span class="meta-val">12</span></div>
-      <div class="meta-item"><span class="meta-label">Players</span><span class="meta-val">90</span></div>
-      <div class="meta-item"><span class="meta-label">Edition</span><span class="meta-val">90th Masters</span></div>
-      <div class="meta-item"><span class="meta-label">Defending</span><span class="meta-val">Rory McIlroy</span></div>
+  <div class="hdr">
+    <div class="eyebrow">Augusta National · April 9–12, 2026 · Full Model v4</div>
+    <h1>Masters 2026<br><em>Predictor</em></h1>
+    <p class="hsub">19-factor predictive model with Monte Carlo simulation, injury penalties, exponential form decay, SG putting, Sunday closing rate, interaction bonuses, and weather adjustment across all four rounds.</p>
+    <div class="v4tag">⚙️ v4 — 19 factors · 10,000 Monte Carlo simulations · Outlier-resistant design</div>
+    <div class="hmeta">
+      <div class="hmi"><span class="hml">Favorite</span><span class="hmv">Scheffler +485</span></div>
+      <div class="hmi"><span class="hml">Defending</span><span class="hmv">Rory McIlroy</span></div>
+      <div class="hmi"><span class="hml">Field</span><span class="hmv">91 players</span></div>
+      <div class="hmi"><span class="hml">Factors</span><span class="hmv">19</span></div>
     </div>
   </div>
 </header>
 
-<div class="weather-strip">
-  <div class="weather-inner" id="weather-days">
-    <div class="weather-day active" onclick="selectDay(0)">
-      <div class="wd-label">Thu · Round 1</div>
-      <div class="wd-row"><span class="wd-temp">74°</span><span class="wd-icon">⛅</span></div>
-      <div class="wd-detail">ENE 10–15 mph · gusts to 20</div>
-      <span class="wd-wind wind-high">Breezy</span>
+<div class="wstrip">
+  <div class="winner" id="wdays">
+    <div class="wday active" onclick="selDay(0)">
+      <div class="wdl">Thu · Round 1</div>
+      <div class="wdrow"><span class="wdt">74°</span><span class="wdicon">⛅</span></div>
+      <div class="wdd">ENE 10–15 mph · gusts 20</div>
+      <span class="wpill wp-hi">Breezy</span>
     </div>
-    <div class="weather-day" onclick="selectDay(1)">
-      <div class="wd-label">Fri · Round 2</div>
-      <div class="wd-row"><span class="wd-temp">79°</span><span class="wd-icon">☀️</span></div>
-      <div class="wd-detail">E 6–12 mph · 0% rain</div>
-      <span class="wd-wind wind-low">Calm</span>
+    <div class="wday" onclick="selDay(1)">
+      <div class="wdl">Fri · Round 2</div>
+      <div class="wdrow"><span class="wdt">79°</span><span class="wdicon">☀️</span></div>
+      <div class="wdd">E 6–12 mph · 0% rain</div>
+      <span class="wpill wp-lo">Calm</span>
     </div>
-    <div class="weather-day" onclick="selectDay(2)">
-      <div class="wd-label">Sat · Round 3</div>
-      <div class="wd-row"><span class="wd-temp">83°</span><span class="wd-icon">☀️</span></div>
-      <div class="wd-detail">NE 4–8 mph · 0% rain</div>
-      <span class="wd-wind wind-low">Light</span>
+    <div class="wday" onclick="selDay(2)">
+      <div class="wdl">Sat · Round 3</div>
+      <div class="wdrow"><span class="wdt">83°</span><span class="wdicon">☀️</span></div>
+      <div class="wdd">NE 4–8 mph · 0% rain</div>
+      <span class="wpill wp-lo">Light</span>
     </div>
-    <div class="weather-day" onclick="selectDay(3)">
-      <div class="wd-label">Sun · Round 4</div>
-      <div class="wd-row"><span class="wd-temp">85°</span><span class="wd-icon">🌤️</span></div>
-      <div class="wd-detail">SE 5–10 mph · 0% rain</div>
-      <span class="wd-wind wind-low">Ideal</span>
+    <div class="wday" onclick="selDay(3)">
+      <div class="wdl">Sun · Round 4</div>
+      <div class="wdrow"><span class="wdt">85°</span><span class="wdicon">🌤️</span></div>
+      <div class="wdd">SE 5–10 mph · 0% rain</div>
+      <span class="wpill wp-lo">Ideal</span>
     </div>
   </div>
 </div>
 
 <div class="main">
-  <div class="tab-row" id="tabs">
-    <button class="tab-btn active" onclick="setTab('leaderboard')">Leaderboard</button>
-    <button class="tab-btn" onclick="setTab('breakdown')">Factor breakdown</button>
-    <button class="tab-btn" onclick="setTab('weather')">Weather impact</button>
-    <button class="tab-btn" onclick="setTab('weights')">Adjust model</button>
-    <button class="tab-btn" onclick="setTab('chart')">Chart</button>
-  </div>
 
-  <!-- LEADERBOARD -->
-  <div id="view-leaderboard">
-    <div class="controls">
-      <input class="ctrl-input" id="srch" type="text" placeholder="Search player…" oninput="renderLB()"/>
-      <select class="ctrl-select" id="filt" onchange="renderLB()">
-        <option value="all">All players</option>
-        <option value="top10">Top 10</option>
-        <option value="sleeper">Sleepers (+3000+)</option>
-        <option value="liv">LIV players</option>
-        <option value="debut">Debutants</option>
-      </select>
-      <select class="ctrl-select" id="srt" onchange="renderLB()">
-        <option value="model">Sort: Model score</option>
-        <option value="amenCorner">Sort: Amen Corner</option>
-        <option value="par5">Sort: Par-5 scoring</option>
-        <option value="majorClutch">Sort: Major clutch</option>
-        <option value="name">Sort: Name A–Z</option>
-      </select>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Player</th>
-            <th>Win prob</th>
-            <th class="hide-sm">Odds</th>
-            <th class="hide-sm">Par 5s</th>
-            <th class="hide-sm">Amen ∠</th>
-            <th class="hide-sm">Clutch</th>
-            <th class="hide-sm">Wthr fit</th>
-          </tr>
-        </thead>
-        <tbody id="lb-body"></tbody>
-      </table>
-    </div>
-  </div>
+<div class="tabrow" id="tabs">
+  <button class="tbtn active" onclick="setTab('lb')">Leaderboard</button>
+  <button class="tbtn" onclick="setTab('weather')">Weather impact</button>
+  <button class="tbtn" onclick="setTab('bd')">Factor breakdown</button>
+  <button class="tbtn" onclick="setTab('risk')">Risk profiles</button>
+  <button class="tbtn" onclick="setTab('weights')">Adjust model</button>
+  <button class="tbtn" onclick="setTab('chart')">Chart</button>
+</div>
 
-  <!-- BREAKDOWN -->
-  <div id="view-breakdown" style="display:none">
-    <div class="controls">
-      <select class="ctrl-select" id="sel-player" onchange="renderBreakdown()" style="min-width:220px"></select>
-    </div>
-    <div id="breakdown-content"></div>
+<!-- LEADERBOARD -->
+<div id="view-lb">
+  <div class="mc-badge">🎲 Win % via 10,000 Monte Carlo simulations with per-factor variance</div>
+  <div class="ctrls">
+    <input class="cinput" id="srch" type="text" placeholder="Search player…" oninput="renderLB()"/>
+    <select class="csel" id="filt" onchange="renderLB()">
+      <option value="all">All players</option>
+      <option value="top10">Top 10</option>
+      <option value="sleeper">Sleepers (+3000+)</option>
+      <option value="liv">LIV players</option>
+      <option value="debut">Debutants</option>
+      <option value="injured">Injury flags</option>
+    </select>
+    <select class="csel" id="srt" onchange="renderLB()">
+      <option value="prob">Sort: Win prob</option>
+      <option value="amenCorner">Sort: Amen Corner</option>
+      <option value="par5">Sort: Par 5s</option>
+      <option value="sundayClose">Sort: Sunday closing</option>
+      <option value="sgPutting">Sort: SG Putting</option>
+      <option value="name">Sort: Name A–Z</option>
+    </select>
   </div>
-
-  <!-- WEATHER -->
-  <div id="view-weather" style="display:none">
-    <div class="controls">
-      <select class="ctrl-select" id="weather-filt" onchange="renderWeather()">
-        <option value="all">All players</option>
-        <option value="top15">Top 15</option>
-      </select>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>Player</th>
-            <th>Adj win %</th>
-            <th class="hide-sm">vs base</th>
-            <th class="hide-sm">Wind game</th>
-            <th class="hide-sm">Heat/firm</th>
-            <th class="hide-sm">Round edge</th>
-          </tr>
-        </thead>
-        <tbody id="weather-body"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- WEIGHTS -->
-  <div id="view-weights" style="display:none">
-    <p style="font-size:13px;color:var(--text-light);margin-bottom:20px;line-height:1.6">Drag sliders to re-weight model factors. The leaderboard and chart update live.</p>
-    <div class="weight-grid" id="weight-grid"></div>
-    <button class="reset-btn" onclick="resetWeights()">Reset to defaults</button>
-  </div>
-
-  <!-- CHART -->
-  <div id="view-chart" style="display:none">
-    <div class="chart-wrap">
-      <canvas id="mainChart" role="img" aria-label="Bar chart of win probabilities for top 15 Masters 2026 contenders">Top 15 Masters win probabilities.</canvas>
-    </div>
+  <div class="twrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Player</th><th>Win %</th>
+        <th class="hs">Odds</th>
+        <th class="hs">Par 5s</th>
+        <th class="hs">SG Put</th>
+        <th class="hs">Sunday ↗</th>
+        <th class="hs">Risk</th>
+      </tr></thead>
+      <tbody id="lb-body"></tbody>
+    </table>
   </div>
 </div>
 
+<!-- WEATHER -->
+<div id="view-weather" style="display:none">
+  <div class="ctrls">
+    <select class="csel" id="wfilt" onchange="renderWeather()">
+      <option value="all">All players</option>
+      <option value="top15">Top 15</option>
+    </select>
+  </div>
+  <div class="twrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Player</th><th>Adj win %</th>
+        <th class="hs">vs base</th>
+        <th class="hs">Wind game</th>
+        <th class="hs">Heat/firm</th>
+        <th class="hs">Key edge</th>
+      </tr></thead>
+      <tbody id="weather-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- BREAKDOWN -->
+<div id="view-bd" style="display:none">
+  <div class="ctrls">
+    <select class="csel" id="bdsel" onchange="renderBD()" style="min-width:220px"></select>
+  </div>
+  <div id="bd-content"></div>
+</div>
+
+<!-- RISK PROFILES -->
+<div id="view-risk" style="display:none">
+  <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;line-height:1.6">Risk = outcome variance. High-risk players have elite upside but real collapse scenarios (injury, Sunday nerves, Amen Corner blow-ups). Low-risk players are floors — unlikely to win but unlikely to embarrass.</p>
+  <div class="twrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Player</th><th>Win %</th>
+        <th>Risk level</th>
+        <th class="hs">Injury flag</th>
+        <th class="hs">Sunday close</th>
+        <th class="hs">Lead/chase</th>
+        <th class="hs">MC floor</th>
+      </tr></thead>
+      <tbody id="risk-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- WEIGHTS -->
+<div id="view-weights" style="display:none">
+  <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;line-height:1.6">Drag sliders to re-weight any of the 19 model factors. Win probabilities recalculate live. Penalty factors (injury, rust, last-event) are applied as multipliers separate from these weights.</p>
+  <div class="wgrid" id="wgrid"></div>
+  <button class="rbtn" onclick="resetWeights()">Reset to defaults</button>
+</div>
+
+<!-- CHART -->
+<div id="view-chart" style="display:none">
+  <div class="chwrap">
+    <canvas id="mainChart" role="img" aria-label="Bar chart of Monte Carlo win probabilities for top 15 Masters 2026 contenders">Top 15 win probabilities.</canvas>
+  </div>
+  <div class="shd">Factor weight distribution</div>
+  <div id="factor-bars"></div>
+</div>
+
+</div><!-- /main -->
+
 <footer>
-  Masters 2026 Predictor &nbsp;·&nbsp; <span>12-factor model</span> &nbsp;·&nbsp; Data sourced from public PGA Tour stats, DraftKings odds & Golf Channel analytics &nbsp;·&nbsp; For entertainment only
+  Masters 2026 Predictor v4 &nbsp;·&nbsp; <span>19 factors · Monte Carlo · Outlier-resistant</span> &nbsp;·&nbsp; Pre-tournament data only · DraftKings odds · PGA Tour / Data Golf stats · For entertainment
 </footer>
 
 <script>
-// ── DATA ───────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════
+//  FACTORS — 19 total
+// ════════════════════════════════════════════════
 const FACTORS = [
-  { key:'sgApproach',    label:'SG: Approach (Augusta)',       desc:'Most decisive single stat — controls scoring variance more than any other at Augusta. Six of eight recent winners ranked top-5 that week.',   def:18 },
-  { key:'par5',          label:'Par-5 scoring',                desc:'9 of 10 recent champions went double-digits under par on par 5s. Holes 2, 8, 13, 15 decide the tournament.',                                  def:15 },
-  { key:'amenCorner',    label:'Amen Corner (11–12–13)',       desc:'Only Sergio Garcia won while being over-par here. Composure on 12 is the single most tournament-deciding moment every year.',                  def:14 },
-  { key:'augustaHist',   label:'Augusta course history',       desc:'Average champion is in their 9th start. Same course every year uniquely rewards course memory and adapted strategy.',                          def:10 },
-  { key:'majorClutch',   label:'Major clutch factor',          desc:'Performance in majors vs regular tour events. Scheffler and Koepka dramatically outperform their standard stats in major weeks.',              def:10 },
-  { key:'recentForm',    label:'Recent form (2026)',           desc:'12 of 13 recent champs had at least one top-5 that season. Momentum is measurable and predictive.',                                            def:9  },
-  { key:'sgTTG',         label:'SG: Tee-to-green',            desc:'McIlroy led the entire field in this metric in his 2025 win. Approach play alone is not enough — full ball-striking package matters.',          def:7  },
-  { key:'weather',       label:'Weather fit (this week)',      desc:'Breezy R1 rewards wind players. Hot, calm weekend rewards power hitters on firm fairways. Fast greens on Sunday suit precision iron players.',  def:6  },
-  { key:'shortGame',     label:'Around-the-green / scrambling',desc:'Augusta runoff areas and tight mown areas demand elite chipping. Reed and Matsuyama are historically the best at this.',                       def:6  },
-  { key:'bogeyAvoid',    label:'Bogey avoidance',              desc:'Fewest bogeys at Amen Corner historically has the strongest green jacket claim. Augusta punishes mistakes more than it rewards brilliance.',    def:5  },
-  { key:'drawBias',      label:'Draw bias / shot shape',       desc:'Right-to-left doglegs favour draw hitters. Lefties historically thrive — Mickelson 3×, Bubba 2×. McIlroy\'s draw is a weapon here.',          def:3  },
-  { key:'bettingSignal', label:'Betting market signal',        desc:'Sharp money movement 48hrs before the tournament captures practice-week intel not yet in public stats.',                                        def:2  },
+  // CORE BALL-STRIKING (38%)
+  { key:'sgApproach',    label:'SG: Approach (Augusta-weighted)', group:'Ball-striking',
+    desc:'Most predictive single stat at Augusta. 6 of 8 recent winners ranked top-5 that week. Weighted toward 175–225 yd proximity which maps to Augusta approach distances.',  def:16 },
+  { key:'sgTTG',         label:'SG: Tee-to-green',                group:'Ball-striking',
+    desc:'Full ball-striking package. McIlroy led all players in this in his 2025 win. Drives the other stats — approach alone misses off-tee positioning.',                       def:10 },
+  { key:'sgPutting',     label:'SG: Putting (fast greens)',        group:'Ball-striking',
+    desc:'Augusta greens are 13–14 on stimpmeter. Recent data shows winners don\'t need elite putting, but catastrophic putting (< −0.5/rd) is a serious outlier risk.',           def:7  },
+  { key:'shortGame',     label:'Around-the-green / scrambling',   group:'Ball-striking',
+    desc:'Augusta runoff areas and tight mown lies demand elite chipping. Reed and Matsuyama historically elite here. Matsuyama is #3 on tour in scrambling entering 2026.',       def:5  },
+
+  // COURSE FIT (29%)
+  { key:'par5',          label:'Par-5 scoring avg',                group:'Course fit',
+    desc:'9 of 10 recent champions went double-digits under on par 5s. Holes 2, 8, 13, 15 are where the Masters is won. Converts length + approach into scoreable opportunities.', def:14 },
+  { key:'amenCorner',    label:'Amen Corner composure (11–12–13)', group:'Course fit',
+    desc:'Only Garcia won being over-par here. 12th Golden Bell is the single most tournament-deciding hole each year. Includes mental composure score under Sunday pressure.',      def:12 },
+  { key:'augustaHist',   label:'Augusta course history',           group:'Course fit',
+    desc:'Average champion in their 9th start. Same course yearly rewards memory: green speeds, slope reads, par-5 lines. Heavily discounted for <3 starts.',                       def:8  },
+  { key:'drawBias',      label:'Draw bias + elevation performance', group:'Course fit',
+    desc:'RTL doglegs favour draw hitters. New: elevation performance — Augusta\'s hills penalise those who struggle with uneven lies. Lefties (Bhatia) get dual bonus.',           def:4  },
+  { key:'proximity',     label:'Proximity 175–225 yd (Augusta fit)',group:'Course fit',
+    desc:'Tighter than generic approach SG. Augusta second shots are typically in this range. Players elite here convert green-hit quality into makeable putts.',                    def:5  },
+
+  // MENTAL / CLUTCH (16%)
+  { key:'majorClutch',   label:'Major clutch factor',              group:'Mental / clutch',
+    desc:'Performance in majors vs. regular tour events. Koepka, Scheffler dramatically outperform norms. Includes sample size — players with 5+ majors get stronger signal.',    def:8  },
+  { key:'sundayClose',   label:'Sunday closing rate (contention)', group:'Mental / clutch',
+    desc:'NEW: Win rate when inside top-5 entering Sunday at a major. Scheffler is elite. Åberg has shown Sunday slippage. Hovland has documented closing issues. Key outlier filter.',def:6  },
+  { key:'leadChase',     label:'Lead/chase profile',               group:'Mental / clutch',
+    desc:'NEW: Some players (Scheffler, Koepka) perform identically leading or chasing. Others collapse when leading (Hovland, historically Rory). Separate from overall clutch.',  def:5  },
+  { key:'bogeyAvoid',    label:'Bogey avoidance',                  group:'Mental / clutch',
+    desc:'Fewest Amen Corner bogeys historically wins the green jacket. Augusta punishes mistakes more than it rewards brilliance. Tracks double-bogey+ avoidance specifically.',   def:4  },
+
+  // FORM & CONTEXT (12%)
+  { key:'recentForm',    label:'Recent form (exponential decay)',   group:'Form & context',
+    desc:'NEW: Exponential decay weighting — results 2 weeks ago count 3× more than 6 weeks ago. 12 of 13 recent champs had a top-5 that season. Flat averaging misses hot streaks.',def:8 },
+  { key:'lastEvent',     label:'Last event penalty/boost',         group:'Form & context',
+    desc:'NEW: 12 of 13 champs finished T-31 or better in their final start. A missed cut in the Valero is a concrete warning sign. A win is a 1.15× multiplier.',                 def:5  },
+
+  // SITUATIONAL (5%)
+  { key:'weather',       label:'Weather fit (this week)',          group:'Situational',
+    desc:'Breezy R1 Thu rewards wind players. Hot calm weekend rewards power/iron players on firm fairways. Fast Sunday greens punish weak putters.',                               def:4  },
+  { key:'bettingSignal', label:'Betting market signal (sharp $)',  group:'Situational',
+    desc:'Sharp money movement 48hrs pre-tournament captures practice-week intel. DraftKings liability data and line movement both factored.',                                       def:3  },
+  { key:'sandSave',      label:'Sand save % (Augusta bunker fit)', group:'Situational',
+    desc:'NEW: Augusta bunkers have shallow faces and tight lies — different from tour average. Players elite in this specific shot type gain edge on a course with punishing bunkers.',def:2 },
+  { key:'caddieExp',     label:'Caddie / Augusta course knowledge',group:'Situational',
+    desc:'NEW: Caddie Augusta experience matters on green reads and par-5 strategy. New caddie in last 6 months = penalty. Multi-year Augusta caddie partnership = bonus.',          def:2  },
 ];
 
+// ════════════════════════════════════════════════
+//  WEATHER DAYS
+// ════════════════════════════════════════════════
 const DAYS = [
   { wind:13, heat:0, firm:0 },
   { wind:9,  heat:1, firm:1 },
@@ -615,645 +391,774 @@ const DAYS = [
   { wind:7,  heat:2, firm:2 },
 ];
 
+// ════════════════════════════════════════════════
+//  PLAYERS — 2026 pre-tournament data
+//  injuryPenalty: multiplier 0.5–1.0 (1.0 = healthy)
+//  rustPenalty: multiplier 0.7–1.0 (days since last event)
+//  lastEventBoost: 1.15 win, 1.05 top10, 1.0 neutral, 0.88 MC
+//  mcFloor: minimum % from Monte Carlo variance (floor performer)
+//  riskLevel: 'Low','Medium','High','Very High'
+//  leadChaseNote: string description
+// ════════════════════════════════════════════════
 const PLAYERS = [
-  { name:'Scottie Scheffler', flag:'🇺🇸', odds:'+410',  liv:false, debut:false, badges:['2× champ'],
+  {
+    name:'Scottie Scheffler', flag:'🇺🇸', odds:'+485', liv:false, debut:false,
+    badges:['2× champ'], injuryPenalty:0.97, rustPenalty:0.94, lastEventBoost:1.0,
+    injuryNote:'Healthy — missed Valero for birth of son (rest, not injury)',
+    rustNote:'3-week layoff — not injury-driven but Augusta focus was deliberate',
+    lastEventNote:'Skipped Valero — neutral signal',
+    riskLevel:'Medium', leadChaseNote:'Identical leading or chasing — elite',
+    mcFloor:6.5, windGame:'Elite', hotFirm:'Very good',
     windBonus:1.2, heatBonus:0.5, firmBonus:0.8,
-    windGame:'Elite', hotFirm:'Very good',
-    sgApproach:9.8, par5:9.2, amenCorner:9.5, augustaHist:9.8, majorClutch:10,  recentForm:8.2, sgTTG:9.5, weather:7.8, shortGame:8.8, bogeyAvoid:9.5, drawBias:7, bettingSignal:8.5 },
-  { name:'Jon Rahm',          flag:'🇪🇸', odds:'+850',  liv:true,  debut:false, badges:['2023 champ'],
+    sgApproach:8.2, sgTTG:9.2, sgPutting:6.5, shortGame:8.8,
+    par5:9.2, amenCorner:9.5, augustaHist:9.8, drawBias:7.0, proximity:8.8,
+    majorClutch:10.0, sundayClose:9.8, leadChase:9.5, bogeyAvoid:9.5,
+    recentForm:7.5, lastEvent:1.0, weather:7.8, bettingSignal:8.5,
+    sandSave:8.5, caddieExp:9.5,
+  },
+  {
+    name:'Jon Rahm', flag:'🇪🇸', odds:'+910', liv:true, debut:false,
+    badges:['2023 champ'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Fully healthy',
+    rustNote:'5 LIV starts this season, no gap',
+    lastEventNote:'Top-5 LIV finish pre-Masters',
+    riskLevel:'Medium', leadChaseNote:'Strong leading and chasing — major winner mentality',
+    mcFloor:4.2, windGame:'World-class', hotFirm:'Average',
     windBonus:1.8, heatBonus:0.2, firmBonus:0.5,
-    windGame:'World-class', hotFirm:'Average',
-    sgApproach:9.5, par5:8.8, amenCorner:8.5, augustaHist:8.5, majorClutch:9.2, recentForm:9.0, sgTTG:9.2, weather:9.0, shortGame:8.2, bogeyAvoid:8.2, drawBias:8, bettingSignal:7.5 },
-  { name:'Rory McIlroy',      flag:'🇬🇧', odds:'+1025', liv:false, debut:false, badges:['Defending'],
-    windBonus:1.5, heatBonus:0.3, firmBonus:0.2,
-    windGame:'Excellent', hotFirm:'Average',
-    sgApproach:9.2, par5:8.0, amenCorner:8.2, augustaHist:8.8, majorClutch:8.5, recentForm:8.0, sgTTG:9.8, weather:8.8, shortGame:7.5, bogeyAvoid:7.8, drawBias:9, bettingSignal:7.5 },
-  { name:'Bryson DeChambeau', flag:'🇺🇸', odds:'+1100', liv:true,  debut:false, badges:['2024 champ'],
-    windBonus:-0.5, heatBonus:1.4, firmBonus:1.6,
-    windGame:'Vulnerable', hotFirm:'Excellent',
-    sgApproach:8.0, par5:9.5, amenCorner:8.0, augustaHist:8.5, majorClutch:8.8, recentForm:8.0, sgTTG:8.5, weather:7.2, shortGame:7.5, bogeyAvoid:7.5, drawBias:6, bettingSignal:7.0 },
-  { name:'Ludvig Åberg',      flag:'🇸🇪', odds:'+1750', liv:false, debut:false, badges:['#1 model'],
+    sgApproach:9.2, sgTTG:9.0, sgPutting:6.8, shortGame:8.2,
+    par5:8.8, amenCorner:8.5, augustaHist:8.8, drawBias:8.0, proximity:9.0,
+    majorClutch:9.2, sundayClose:8.8, leadChase:8.5, bogeyAvoid:8.2,
+    recentForm:9.0, lastEvent:1.05, weather:9.0, bettingSignal:7.5,
+    sandSave:7.8, caddieExp:8.0,
+  },
+  {
+    name:'Ludvig Åberg', flag:'🇸🇪', odds:'+1650', liv:false, debut:false,
+    badges:['#1 model'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:0.95,
+    injuryNote:'Healthy',
+    rustNote:'Active — played Valero',
+    lastEventNote:'T-5 Valero but squandered 3-shot lead Sunday — Sunday slippage pattern',
+    riskLevel:'High', leadChaseNote:'Sunday slippage concern — 2× squandered leads in last month',
+    mcFloor:3.0, windGame:'Good', hotFirm:'Good',
     windBonus:0.8, heatBonus:0.9, firmBonus:1.1,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:9.0, par5:8.5, amenCorner:7.8, augustaHist:5.5, majorClutch:7.5, recentForm:9.2, sgTTG:9.0, weather:8.2, shortGame:7.8, bogeyAvoid:8.0, drawBias:7, bettingSignal:8.0 },
-  { name:'Xander Schauffele', flag:'🇺🇸', odds:'+1850', liv:false, debut:false, badges:['9th start'],
-    windBonus:0.6, heatBonus:0.7, firmBonus:0.9,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:8.5, par5:8.2, amenCorner:8.8, augustaHist:8.5, majorClutch:8.5, recentForm:8.5, sgTTG:8.8, weather:7.8, shortGame:8.5, bogeyAvoid:8.5, drawBias:7, bettingSignal:7.0 },
-  { name:'Cameron Young',     flag:'🇺🇸', odds:'+2400', liv:false, debut:false, badges:['Players W'],
-    windBonus:-0.3, heatBonus:0.7, firmBonus:1.0,
-    windGame:'Below avg', hotFirm:'Good',
-    sgApproach:7.8, par5:8.5, amenCorner:7.5, augustaHist:6.5, majorClutch:7.5, recentForm:8.8, sgTTG:8.5, weather:7.0, shortGame:7.5, bogeyAvoid:7.5, drawBias:6, bettingSignal:7.5 },
-  { name:'Tommy Fleetwood',   flag:'🇬🇧', odds:'+2500', liv:false, debut:false, badges:[],
+    sgApproach:9.0, sgTTG:9.0, sgPutting:7.5, shortGame:7.8,
+    par5:8.5, amenCorner:7.5, augustaHist:6.5, drawBias:7.0, proximity:8.8,
+    majorClutch:7.5, sundayClose:6.5, leadChase:6.2, bogeyAvoid:8.0,
+    recentForm:9.0, lastEvent:0.95, weather:8.2, bettingSignal:8.0,
+    sandSave:7.5, caddieExp:7.0,
+  },
+  {
+    name:'Bryson DeChambeau', flag:'🇺🇸', odds:'+1075', liv:true, debut:false,
+    badges:['2024 champ'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.15,
+    injuryNote:'Fully healthy — back-to-back LIV wins',
+    rustNote:'Active on LIV, competitive rounds fresh',
+    lastEventNote:'Won back-to-back LIV events — 1.15× win boost',
+    riskLevel:'Medium', leadChaseNote:'Strong chasing, can wilt on Sunday in leads',
+    mcFloor:3.8, windGame:'Vulnerable', hotFirm:'Excellent',
+    windBonus:-0.5, heatBonus:1.4, firmBonus:1.6,
+    sgApproach:8.0, sgTTG:8.5, sgPutting:6.2, shortGame:7.5,
+    par5:9.5, amenCorner:8.2, augustaHist:8.5, drawBias:6.0, proximity:7.8,
+    majorClutch:8.8, sundayClose:7.8, leadChase:7.5, bogeyAvoid:7.5,
+    recentForm:9.2, lastEvent:1.15, weather:7.2, bettingSignal:7.5,
+    sandSave:7.0, caddieExp:8.5,
+  },
+  {
+    name:'Rory McIlroy', flag:'🇬🇧', odds:'+1150', liv:false, debut:false,
+    badges:['Defending'], injuryPenalty:0.93, rustPenalty:0.95, lastEventBoost:1.0,
+    injuryNote:'Back injury — WD Arnold Palmer, managed to play Players (T-46)',
+    rustNote:'3-week layoff entering Augusta — longest drought in years',
+    lastEventNote:'T-46 at Players — below-par signal from last competitive event',
+    riskLevel:'High', leadChaseNote:'Historically struggles when leading — historic collapses at Augusta but won 2025 despite double-bogeys',
+    mcFloor:2.8, windGame:'Excellent', hotFirm:'Average',
+    windBonus:1.5, heatBonus:0.3, firmBonus:0.2,
+    sgApproach:9.0, sgTTG:9.8, sgPutting:5.5, shortGame:7.5,
+    par5:8.0, amenCorner:8.2, augustaHist:8.8, drawBias:9.0, proximity:8.8,
+    majorClutch:8.5, sundayClose:7.5, leadChase:7.0, bogeyAvoid:7.8,
+    recentForm:7.5, lastEvent:1.0, weather:8.8, bettingSignal:7.5,
+    sandSave:7.5, caddieExp:9.5,
+  },
+  {
+    name:'Tommy Fleetwood', flag:'🇬🇧', odds:'+2000', liv:false, debut:false,
+    badges:[], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Healthy — FedEx Cup champion 2025',
+    rustNote:'Active — T-10 Valero',
+    lastEventNote:'T-10 Valero — solid signal',
+    riskLevel:'Low', leadChaseNote:'Consistent — rarely collapses, rarely blows past expectations',
+    mcFloor:2.2, windGame:'Outstanding', hotFirm:'Below avg',
     windBonus:1.4, heatBonus:0.1, firmBonus:-0.2,
-    windGame:'Outstanding', hotFirm:'Below avg',
-    sgApproach:8.8, par5:7.2, amenCorner:8.0, augustaHist:7.8, majorClutch:8.0, recentForm:8.8, sgTTG:8.5, weather:9.2, shortGame:8.2, bogeyAvoid:8.5, drawBias:8, bettingSignal:6.5 },
-  { name:'Matt Fitzpatrick',  flag:'🇬🇧', odds:'+2600', liv:false, debut:false, badges:['Valspar W'],
+    sgApproach:8.8, sgTTG:8.5, sgPutting:7.2, shortGame:8.2,
+    par5:7.2, amenCorner:8.0, augustaHist:7.8, drawBias:8.0, proximity:8.2,
+    majorClutch:8.0, sundayClose:7.8, leadChase:8.0, bogeyAvoid:8.5,
+    recentForm:8.8, lastEvent:1.05, weather:9.2, bettingSignal:6.5,
+    sandSave:7.8, caddieExp:7.5,
+  },
+  {
+    name:'Matt Fitzpatrick', flag:'🇬🇧', odds:'+2200', liv:false, debut:false,
+    badges:['Valspar W'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.15,
+    injuryNote:'Healthy',
+    rustNote:'Won Valspar — came in on form',
+    lastEventNote:'Won Valspar the week before Masters — 1.15× win boost',
+    riskLevel:'Low', leadChaseNote:'Solid closer — US Open winner under pressure',
+    mcFloor:2.0, windGame:'Good', hotFirm:'Good',
     windBonus:0.6, heatBonus:0.7, firmBonus:0.9,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:9.3, par5:7.8, amenCorner:7.5, augustaHist:7.5, majorClutch:7.8, recentForm:9.5, sgTTG:9.5, weather:7.5, shortGame:8.0, bogeyAvoid:8.2, drawBias:7, bettingSignal:7.0 },
-  { name:'Collin Morikawa',   flag:'🇺🇸', odds:'+3100', liv:false, debut:false, badges:['#1 SG app'],
+    sgApproach:9.3, sgTTG:9.5, sgPutting:6.5, shortGame:8.0,
+    par5:7.8, amenCorner:7.5, augustaHist:7.5, drawBias:7.0, proximity:9.2,
+    majorClutch:7.8, sundayClose:8.0, leadChase:7.8, bogeyAvoid:8.2,
+    recentForm:9.5, lastEvent:1.15, weather:7.5, bettingSignal:7.0,
+    sandSave:8.0, caddieExp:7.0,
+  },
+  {
+    name:'Xander Schauffele', flag:'🇺🇸', odds:'+2200', liv:false, debut:false,
+    badges:['9th start'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Healthy — top-10 last 3 starts',
+    rustNote:'Active and in form',
+    lastEventNote:'T-7 Valero — excellent signal',
+    riskLevel:'Low', leadChaseNote:'Strong in both roles — won PGA and Open in 2024',
+    mcFloor:2.5, windGame:'Good', hotFirm:'Good',
+    windBonus:0.6, heatBonus:0.7, firmBonus:0.9,
+    sgApproach:8.5, sgTTG:8.8, sgPutting:7.8, shortGame:8.5,
+    par5:8.2, amenCorner:8.8, augustaHist:8.5, drawBias:7.0, proximity:8.5,
+    majorClutch:8.5, sundayClose:8.5, leadChase:8.8, bogeyAvoid:8.5,
+    recentForm:8.8, lastEvent:1.05, weather:7.8, bettingSignal:7.0,
+    sandSave:8.2, caddieExp:8.0,
+  },
+  {
+    name:'Collin Morikawa', flag:'🇺🇸', odds:'+2500', liv:false, debut:false,
+    badges:['#1 SG app'], injuryPenalty:0.82, rustPenalty:0.72, lastEventBoost:0.85,
+    injuryNote:'Back injury — WD Players, missed Valero. Status unclear entering week',
+    rustNote:'Did not play for weeks — significant competitive rust penalty',
+    lastEventNote:'WD Players — serious negative signal',
+    riskLevel:'Very High', leadChaseNote:'Elite closer when healthy — but health is the question',
+    mcFloor:0.5, windGame:'Very good', hotFirm:'Average',
     windBonus:1.0, heatBonus:0.4, firmBonus:0.6,
-    windGame:'Very good', hotFirm:'Average',
-    sgApproach:9.8, par5:7.5, amenCorner:7.0, augustaHist:7.5, majorClutch:8.8, recentForm:7.5, sgTTG:9.0, weather:7.5, shortGame:7.0, bogeyAvoid:7.8, drawBias:6, bettingSignal:6.5 },
-  { name:'Justin Rose',       flag:'🇬🇧', odds:'+3600', liv:false, debut:false, badges:['Runner-up'],
-    windBonus:0.8, heatBonus:0.3, firmBonus:0.4,
-    windGame:'Very good', hotFirm:'Average',
-    sgApproach:8.2, par5:7.2, amenCorner:7.8, augustaHist:8.2, majorClutch:7.5, recentForm:7.8, sgTTG:8.0, weather:7.8, shortGame:7.5, bogeyAvoid:7.5, drawBias:8, bettingSignal:6.0 },
-  { name:'Jordan Spieth',     flag:'🇺🇸', odds:'+3800', liv:false, debut:false, badges:['2015 champ'],
-    windBonus:0.4, heatBonus:-0.3, firmBonus:-0.8,
-    windGame:'Good', hotFirm:'Below avg',
-    sgApproach:7.5, par5:7.8, amenCorner:6.5, augustaHist:9.2, majorClutch:7.5, recentForm:7.2, sgTTG:7.5, weather:6.8, shortGame:9.0, bogeyAvoid:6.0, drawBias:7, bettingSignal:6.0 },
-  { name:'Brooks Koepka',     flag:'🇺🇸', odds:'+3800', liv:true,  debut:false, badges:[],
-    windBonus:0.8, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:8.0, par5:8.0, amenCorner:7.8, augustaHist:7.8, majorClutch:9.5, recentForm:7.5, sgTTG:8.0, weather:7.8, shortGame:7.5, bogeyAvoid:7.8, drawBias:6, bettingSignal:7.0 },
-  { name:'Hideki Matsuyama',  flag:'🇯🇵', odds:'+3900', liv:false, debut:false, badges:['2021 champ'],
+    sgApproach:9.8, sgTTG:9.0, sgPutting:5.8, shortGame:7.0,
+    par5:7.5, amenCorner:7.2, augustaHist:7.5, drawBias:6.0, proximity:9.5,
+    majorClutch:8.8, sundayClose:8.5, leadChase:8.2, bogeyAvoid:7.8,
+    recentForm:5.5, lastEvent:0.85, weather:7.5, bettingSignal:6.5,
+    sandSave:7.5, caddieExp:7.5,
+  },
+  {
+    name:'Hideki Matsuyama', flag:'🇯🇵', odds:'+2800', liv:false, debut:false,
+    badges:['2021 champ'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.0,
+    injuryNote:'Healthy',
+    rustNote:'Active — played Valero',
+    lastEventNote:'Neutral finish at Valero',
+    riskLevel:'Low', leadChaseNote:'Steady — won 2021 decisively, consistent performer',
+    mcFloor:1.8, windGame:'Moderate', hotFirm:'Good',
     windBonus:0.3, heatBonus:0.6, firmBonus:0.8,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:8.8, par5:8.0, amenCorner:7.8, augustaHist:8.8, majorClutch:7.8, recentForm:7.8, sgTTG:8.5, weather:7.0, shortGame:9.2, bogeyAvoid:8.0, drawBias:7, bettingSignal:6.5 },
-  { name:'Robert MacIntyre',  flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', odds:'+4000', liv:false, debut:false, badges:[],
-    windBonus:1.5, heatBonus:0.0, firmBonus:-0.3,
-    windGame:'Outstanding', hotFirm:'Below avg',
-    sgApproach:8.0, par5:7.5, amenCorner:7.5, augustaHist:6.5, majorClutch:7.5, recentForm:8.5, sgTTG:8.2, weather:9.0, shortGame:7.8, bogeyAvoid:7.8, drawBias:9, bettingSignal:6.5 },
-  { name:'Russell Henley',    flag:'🇺🇸', odds:'+4200', liv:false, debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.8, firmBonus:0.8,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:8.0, par5:7.5, amenCorner:7.2, augustaHist:7.0, majorClutch:7.2, recentForm:8.0, sgTTG:7.8, weather:7.0, shortGame:8.0, bogeyAvoid:7.8, drawBias:7, bettingSignal:6.5 },
-  { name:'Chris Gotterup',    flag:'🇺🇸', odds:'+4300', liv:false, debut:true,  badges:['Hot'],
-    windBonus:-0.6, heatBonus:0.8, firmBonus:0.9,
-    windGame:'Below avg', hotFirm:'Good',
-    sgApproach:7.5, par5:8.0, amenCorner:6.5, augustaHist:2.0, majorClutch:6.5, recentForm:9.8, sgTTG:8.0, weather:6.5, shortGame:7.8, bogeyAvoid:7.0, drawBias:6, bettingSignal:7.0 },
-  { name:'Patrick Reed',      flag:'🇺🇸', odds:'+4500', liv:true,  debut:false, badges:['2018 champ'],
-    windBonus:0.5, heatBonus:0.3, firmBonus:0.4,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:7.2, par5:7.8, amenCorner:8.5, augustaHist:8.8, majorClutch:8.5, recentForm:7.5, sgTTG:7.0, weather:6.8, shortGame:9.5, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.5 },
-  { name:'Viktor Hovland',    flag:'🇳🇴', odds:'+4600', liv:false, debut:false, badges:[],
-    windBonus:0.5, heatBonus:-0.4, firmBonus:-0.6,
-    windGame:'Good', hotFirm:'Below avg',
-    sgApproach:8.0, par5:7.5, amenCorner:7.0, augustaHist:7.0, majorClutch:7.5, recentForm:7.2, sgTTG:8.5, weather:7.5, shortGame:5.5, bogeyAvoid:6.5, drawBias:6, bettingSignal:6.0 },
-  { name:'Si Woo Kim',        flag:'🇰🇷', odds:'+4700', liv:false, debut:false, badges:[],
-    windBonus:0.4, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.8, par5:7.5, amenCorner:7.0, augustaHist:7.0, majorClutch:7.0, recentForm:8.2, sgTTG:7.8, weather:7.0, shortGame:7.5, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.5 },
-  { name:'Min Woo Lee',       flag:'🇦🇺', odds:'+5400', liv:false, debut:false, badges:[],
-    windBonus:0.8, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:8.0, par5:7.8, amenCorner:7.2, augustaHist:5.5, majorClutch:7.2, recentForm:8.5, sgTTG:8.2, weather:7.5, shortGame:7.8, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.5 },
-  { name:'Justin Thomas',     flag:'🇺🇸', odds:'+5500', liv:false, debut:false, badges:[],
-    windBonus:0.5, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:8.5, par5:8.2, amenCorner:7.5, augustaHist:7.5, majorClutch:8.0, recentForm:7.5, sgTTG:8.5, weather:7.5, shortGame:8.2, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.5 },
-  { name:'Patrick Cantlay',   flag:'🇺🇸', odds:'+5700', liv:false, debut:false, badges:[],
-    windBonus:0.5, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:7.8, par5:7.5, amenCorner:7.5, augustaHist:7.2, majorClutch:7.2, recentForm:7.8, sgTTG:7.8, weather:7.0, shortGame:8.0, bogeyAvoid:8.0, drawBias:7, bettingSignal:7.0 },
-  { name:'Adam Scott',        flag:'🇦🇺', odds:'+6200', liv:false, debut:false, badges:['2013 champ'],
-    windBonus:0.4, heatBonus:0.4, firmBonus:0.5,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:8.0, par5:7.5, amenCorner:7.5, augustaHist:8.8, majorClutch:7.2, recentForm:7.0, sgTTG:8.0, weather:7.0, shortGame:8.0, bogeyAvoid:7.8, drawBias:8, bettingSignal:5.5 },
-  { name:'Akshay Bhatia',     flag:'🇺🇸', odds:'+6600', liv:false, debut:false, badges:['Lefty'],
+    sgApproach:8.8, sgTTG:8.5, sgPutting:7.2, shortGame:9.2,
+    par5:8.0, amenCorner:7.8, augustaHist:8.8, drawBias:7.0, proximity:8.5,
+    majorClutch:7.8, sundayClose:8.0, leadChase:7.8, bogeyAvoid:8.0,
+    recentForm:7.8, lastEvent:1.0, weather:7.0, bettingSignal:6.5,
+    sandSave:9.0, caddieExp:9.0,
+  },
+  {
+    name:'Cameron Young', flag:'🇺🇸', odds:'+2300', liv:false, debut:false,
+    badges:['Players W'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.15,
+    injuryNote:'Healthy',
+    rustNote:'Active — Players winner',
+    lastEventNote:'Won The Players — 1.15× win boost',
+    riskLevel:'Medium', leadChaseNote:'Improved closer — Players win showed Sunday nerve',
+    mcFloor:1.5, windGame:'Below avg', hotFirm:'Good',
+    windBonus:-0.3, heatBonus:0.7, firmBonus:1.0,
+    sgApproach:7.8, sgTTG:8.5, sgPutting:7.8, shortGame:7.5,
+    par5:8.5, amenCorner:7.5, augustaHist:6.5, drawBias:6.0, proximity:8.2,
+    majorClutch:7.5, sundayClose:7.8, leadChase:7.5, bogeyAvoid:7.5,
+    recentForm:9.2, lastEvent:1.15, weather:7.0, bettingSignal:7.5,
+    sandSave:7.2, caddieExp:6.5,
+  },
+  {
+    name:'Akshay Bhatia', flag:'🇺🇸', odds:'+5700', liv:false, debut:false,
+    badges:['Lefty'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Healthy',
+    rustNote:'Active',
+    lastEventNote:'T-8 recent form',
+    riskLevel:'Medium', leadChaseNote:'Aggressive — young player, relatively untested under Augusta Sunday pressure',
+    mcFloor:0.9, windGame:'Moderate', hotFirm:'Good',
     windBonus:0.2, heatBonus:0.9, firmBonus:0.8,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:8.2, par5:7.8, amenCorner:7.2, augustaHist:5.0, majorClutch:7.0, recentForm:9.0, sgTTG:8.5, weather:7.5, shortGame:8.0, bogeyAvoid:7.5, drawBias:9, bettingSignal:6.0 },
-  { name:'Sepp Straka',       flag:'🇦🇹', odds:'+6700', liv:false, debut:false, badges:[],
-    windBonus:0.5, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:7.8, par5:7.5, amenCorner:7.0, augustaHist:6.5, majorClutch:7.0, recentForm:7.8, sgTTG:7.8, weather:7.0, shortGame:7.5, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.0 },
-  { name:'Jason Day',         flag:'🇦🇺', odds:'+6900', liv:false, debut:false, badges:[],
-    windBonus:0.6, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:8.0, par5:7.8, amenCorner:7.5, augustaHist:7.8, majorClutch:8.2, recentForm:7.5, sgTTG:7.8, weather:7.2, shortGame:8.5, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.0 },
-  { name:'Jake Knapp',        flag:'🇺🇸', odds:'+6900', liv:false, debut:false, badges:['Low rd'],
-    windBonus:0.3, heatBonus:0.7, firmBonus:0.8,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.5, par5:7.8, amenCorner:6.8, augustaHist:5.5, majorClutch:6.8, recentForm:8.5, sgTTG:7.8, weather:7.0, shortGame:7.5, bogeyAvoid:7.2, drawBias:6, bettingSignal:6.5 },
-  { name:'Tyrrell Hatton',    flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+6900', liv:true,  debut:false, badges:[],
-    windBonus:1.6, heatBonus:-0.2, firmBonus:-0.4,
-    windGame:'World-class', hotFirm:'Below avg',
-    sgApproach:8.2, par5:7.5, amenCorner:7.8, augustaHist:7.2, majorClutch:7.8, recentForm:7.5, sgTTG:8.2, weather:9.5, shortGame:8.0, bogeyAvoid:7.2, drawBias:8, bettingSignal:6.5 },
-  { name:'Shane Lowry',       flag:'🇮🇪', odds:'+7000', liv:false, debut:false, badges:[],
-    windBonus:1.3, heatBonus:0.1, firmBonus:0.0,
-    windGame:'Excellent', hotFirm:'Average',
-    sgApproach:7.5, par5:7.0, amenCorner:7.2, augustaHist:7.0, majorClutch:7.8, recentForm:7.0, sgTTG:7.5, weather:8.5, shortGame:7.8, bogeyAvoid:7.5, drawBias:8, bettingSignal:5.5 },
-  { name:'Sam Burns',         flag:'🇺🇸', odds:'+7200', liv:false, debut:false, badges:[],
-    windBonus:0.4, heatBonus:0.7, firmBonus:0.8,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.8, par5:7.5, amenCorner:7.2, augustaHist:6.8, majorClutch:7.2, recentForm:7.8, sgTTG:7.8, weather:7.2, shortGame:7.8, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.0 },
-  { name:'Corey Conners',     flag:'🇨🇦', odds:'+8200', liv:false, debut:false, badges:[],
-    windBonus:0.5, heatBonus:0.4, firmBonus:0.6,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:8.2, par5:7.2, amenCorner:7.0, augustaHist:7.5, majorClutch:7.0, recentForm:7.5, sgTTG:8.0, weather:7.5, shortGame:7.2, bogeyAvoid:7.5, drawBias:7, bettingSignal:5.5 },
-  { name:'Nicolai Højgaard',  flag:'🇩🇰', odds:'+8400', liv:false, debut:false, badges:[],
+    sgApproach:8.2, sgTTG:8.5, sgPutting:7.5, shortGame:8.0,
+    par5:7.8, amenCorner:7.2, augustaHist:5.0, drawBias:9.0, proximity:8.0,
+    majorClutch:7.0, sundayClose:7.0, leadChase:6.8, bogeyAvoid:7.5,
+    recentForm:9.0, lastEvent:1.05, weather:7.5, bettingSignal:6.0,
+    sandSave:7.5, caddieExp:5.5,
+  },
+  {
+    name:'Brooks Koepka', flag:'🇺🇸', odds:'+3700', liv:true, debut:false,
+    badges:[], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Healthy — back on PGA Tour, trending',
+    rustNote:'Active recent form',
+    lastEventNote:'Series of strong finishes returning to PGA Tour',
+    riskLevel:'Medium', leadChaseNote:'Elite major clutch — identical in any situation when majors are on the line',
+    mcFloor:1.2, windGame:'Good', hotFirm:'Good',
+    windBonus:0.8, heatBonus:0.5, firmBonus:0.6,
+    sgApproach:8.0, sgTTG:8.0, sgPutting:5.2, shortGame:7.5,
+    par5:8.0, amenCorner:7.8, augustaHist:7.8, drawBias:6.0, proximity:8.0,
+    majorClutch:9.5, sundayClose:9.0, leadChase:8.8, bogeyAvoid:7.8,
+    recentForm:7.8, lastEvent:1.05, weather:7.8, bettingSignal:7.0,
+    sandSave:7.2, caddieExp:7.5,
+  },
+  {
+    name:'Chris Gotterup', flag:'🇺🇸', odds:'+6500', liv:false, debut:true,
+    badges:['Hot'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Healthy — hottest player on tour',
+    rustNote:'Active — back-to-back wins',
+    lastEventNote:'Recent top-5 finish',
+    riskLevel:'Very High', leadChaseNote:'Debut — Augusta first-timer hex is real (no winner since Zoeller 1979)',
+    mcFloor:0.4, windGame:'Below avg', hotFirm:'Good',
+    windBonus:-0.6, heatBonus:0.8, firmBonus:0.9,
+    sgApproach:7.5, sgTTG:8.0, sgPutting:7.8, shortGame:7.8,
+    par5:8.0, amenCorner:6.5, augustaHist:2.0, drawBias:6.0, proximity:7.5,
+    majorClutch:6.5, sundayClose:6.5, leadChase:6.5, bogeyAvoid:7.0,
+    recentForm:9.8, lastEvent:1.05, weather:6.5, bettingSignal:7.0,
+    sandSave:7.0, caddieExp:2.5,
+  },
+  {
+    name:'Viktor Hovland', flag:'🇳🇴', odds:'+4500', liv:false, debut:false,
+    badges:[], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.0,
+    injuryNote:'Healthy',
+    rustNote:'Active',
+    lastEventNote:'Neutral signal',
+    riskLevel:'High', leadChaseNote:'Sunday and leading issues well documented — top-5 at Augusta but struggles to convert',
+    mcFloor:0.8, windGame:'Good', hotFirm:'Below avg',
+    windBonus:0.5, heatBonus:-0.4, firmBonus:-0.6,
+    sgApproach:8.0, sgTTG:8.5, sgPutting:4.5, shortGame:5.5,
+    par5:7.5, amenCorner:7.0, augustaHist:7.0, drawBias:6.0, proximity:8.0,
+    majorClutch:7.5, sundayClose:6.0, leadChase:6.0, bogeyAvoid:6.5,
+    recentForm:7.2, lastEvent:1.0, weather:7.5, bettingSignal:6.0,
+    sandSave:6.0, caddieExp:7.0,
+  },
+  {
+    name:'Jordan Spieth', flag:'🇺🇸', odds:'+4700', liv:false, debut:false,
+    badges:['2015 champ'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:0.92,
+    injuryNote:'Healthy',
+    rustNote:'Active',
+    lastEventNote:'MC at Valero — concrete warning signal',
+    riskLevel:'Very High', leadChaseNote:'Notorious Augusta collapse history (2016 12th hole). Can win but variance is enormous',
+    mcFloor:0.5, windGame:'Good', hotFirm:'Below avg',
+    windBonus:0.4, heatBonus:-0.3, firmBonus:-0.8,
+    sgApproach:7.5, sgTTG:7.5, sgPutting:8.5, shortGame:9.0,
+    par5:7.8, amenCorner:6.5, augustaHist:9.2, drawBias:7.0, proximity:7.5,
+    majorClutch:7.5, sundayClose:6.8, leadChase:5.5, bogeyAvoid:6.0,
+    recentForm:7.0, lastEvent:0.92, weather:6.8, bettingSignal:6.0,
+    sandSave:8.5, caddieExp:9.0,
+  },
+  {
+    name:'Nicolai Højgaard', flag:'🇩🇰', odds:'+5500', liv:false, debut:false,
+    badges:[], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Healthy — 4 top-6 finishes in 9 starts',
+    rustNote:'Active — 2nd at Houston Open',
+    lastEventNote:'Runner-up Houston — strong signal',
+    riskLevel:'High', leadChaseNote:'Augusta Q-bogey on 12 in 2024 a warning. Strong iron play but Sunday Augusta pressure untested',
+    mcFloor:0.7, windGame:'Very good', hotFirm:'Average',
     windBonus:1.4, heatBonus:0.1, firmBonus:-0.2,
-    windGame:'Very good', hotFirm:'Average',
-    sgApproach:7.8, par5:7.5, amenCorner:6.0, augustaHist:5.0, majorClutch:7.0, recentForm:8.8, sgTTG:8.2, weather:8.0, shortGame:7.5, bogeyAvoid:7.0, drawBias:7, bettingSignal:6.5 },
-  { name:'Kurt Kitayama',     flag:'🇺🇸', odds:'+8800', liv:false, debut:false, badges:[],
-    windBonus:0.4, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.5, par5:7.2, amenCorner:6.8, augustaHist:6.0, majorClutch:7.0, recentForm:7.5, sgTTG:7.5, weather:7.0, shortGame:7.5, bogeyAvoid:7.2, drawBias:6, bettingSignal:6.0 },
-  { name:'J.J. Spaun',        flag:'🇺🇸', odds:'+8800', liv:false, debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.2, par5:7.2, amenCorner:6.5, augustaHist:6.0, majorClutch:6.8, recentForm:7.5, sgTTG:7.2, weather:6.8, shortGame:7.2, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.5 },
-  { name:'Jacob Bridgeman',   flag:'🇺🇸', odds:'+9400', liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.3, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.5, par5:7.5, amenCorner:6.0, augustaHist:2.0, majorClutch:6.5, recentForm:8.0, sgTTG:7.5, weather:7.0, shortGame:7.5, bogeyAvoid:7.2, drawBias:7, bettingSignal:6.0 },
-  { name:'Maverick McNealy',  flag:'🇺🇸', odds:'+9800', liv:false, debut:false, badges:[],
-    windBonus:0.4, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:7.5, par5:7.0, amenCorner:6.8, augustaHist:5.5, majorClutch:6.8, recentForm:7.8, sgTTG:7.5, weather:7.0, shortGame:7.5, bogeyAvoid:7.2, drawBias:7, bettingSignal:5.5 },
-  { name:'Cameron Smith',     flag:'🇦🇺', odds:'+10000',liv:true,  debut:false, badges:[],
-    windBonus:0.8, heatBonus:0.3, firmBonus:0.2,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.5, par5:8.0, amenCorner:7.5, augustaHist:7.8, majorClutch:8.0, recentForm:7.2, sgTTG:7.5, weather:7.5, shortGame:9.5, bogeyAvoid:7.5, drawBias:8, bettingSignal:6.0 },
-  { name:'Harris English',    flag:'🇺🇸', odds:'+10500',liv:false, debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.5, par5:7.2, amenCorner:6.8, augustaHist:6.5, majorClutch:7.0, recentForm:7.5, sgTTG:7.5, weather:7.0, shortGame:7.2, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.5 },
-  { name:'Gary Woodland',     flag:'🇺🇸', odds:'+11000',liv:false, debut:false, badges:['Story'],
-    windBonus:0.5, heatBonus:0.4, firmBonus:0.5,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:6.8, par5:7.0, amenCorner:6.5, augustaHist:6.5, majorClutch:7.0, recentForm:7.8, sgTTG:7.0, weather:6.8, shortGame:6.8, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.5 },
-  { name:'Ben Griffin',       flag:'🇺🇸', odds:'+11000',liv:false, debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.5, par5:7.2, amenCorner:6.5, augustaHist:5.5, majorClutch:6.8, recentForm:7.8, sgTTG:7.5, weather:7.0, shortGame:7.2, bogeyAvoid:7.2, drawBias:7, bettingSignal:5.5 },
-  { name:'Daniel Berger',     flag:'🇺🇸', odds:'+11000',liv:false, debut:false, badges:[],
-    windBonus:0.4, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:7.8, par5:7.5, amenCorner:7.0, augustaHist:6.5, majorClutch:7.5, recentForm:7.5, sgTTG:7.8, weather:7.2, shortGame:7.5, bogeyAvoid:7.2, drawBias:6, bettingSignal:6.0 },
-  { name:'Max Homa',          flag:'🇺🇸', odds:'+11500',liv:false, debut:false, badges:[],
-    windBonus:0.5, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:7.5, par5:7.2, amenCorner:7.0, augustaHist:6.5, majorClutch:7.0, recentForm:7.5, sgTTG:7.5, weather:7.0, shortGame:7.8, bogeyAvoid:7.5, drawBias:7, bettingSignal:6.0 },
-  { name:'Sungjae Im',        flag:'🇰🇷', odds:'+12000',liv:false, debut:false, badges:[],
-    windBonus:0.4, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.8, par5:7.5, amenCorner:7.0, augustaHist:7.2, majorClutch:7.0, recentForm:7.5, sgTTG:7.8, weather:7.0, shortGame:7.5, bogeyAvoid:7.8, drawBias:7, bettingSignal:6.0 },
-  { name:'Rasmus Højgaard',   flag:'🇩🇰', odds:'+13000',liv:false, debut:false, badges:[],
-    windBonus:1.2, heatBonus:0.0, firmBonus:-0.2,
-    windGame:'Very good', hotFirm:'Average',
-    sgApproach:7.5, par5:7.2, amenCorner:6.5, augustaHist:5.0, majorClutch:7.0, recentForm:8.0, sgTTG:7.8, weather:8.0, shortGame:7.5, bogeyAvoid:7.0, drawBias:7, bettingSignal:6.0 },
-  { name:'Keegan Bradley',    flag:'🇺🇸', odds:'+14000',liv:false, debut:false, badges:[],
-    windBonus:0.4, heatBonus:0.4, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:7.2, par5:7.5, amenCorner:7.0, augustaHist:7.0, majorClutch:7.5, recentForm:7.2, sgTTG:7.2, weather:7.0, shortGame:7.5, bogeyAvoid:7.2, drawBias:7, bettingSignal:5.5 },
-  { name:'Harry Hall',        flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+16000',liv:false, debut:false, badges:[],
-    windBonus:0.8, heatBonus:0.2, firmBonus:0.3,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.2, par5:7.0, amenCorner:6.5, augustaHist:5.5, majorClutch:6.5, recentForm:7.5, sgTTG:7.2, weather:7.5, shortGame:7.0, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.5 },
-  { name:'Marco Penge',       flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+16000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.9, heatBonus:0.2, firmBonus:0.2,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.0, par5:7.0, amenCorner:6.0, augustaHist:2.0, majorClutch:6.5, recentForm:7.8, sgTTG:7.2, weather:7.8, shortGame:7.0, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.5 },
-  { name:'Alex Noren',        flag:'🇸🇪', odds:'+16500',liv:false, debut:false, badges:[],
-    windBonus:0.9, heatBonus:0.1, firmBonus:0.2,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.5, par5:7.0, amenCorner:6.8, augustaHist:6.5, majorClutch:7.0, recentForm:7.0, sgTTG:7.5, weather:7.5, shortGame:7.5, bogeyAvoid:7.2, drawBias:8, bettingSignal:5.0 },
-  { name:'Ryan Gerard',       flag:'🇺🇸', odds:'+17000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.3, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.2, par5:7.2, amenCorner:6.0, augustaHist:2.0, majorClutch:6.5, recentForm:8.0, sgTTG:7.2, weather:6.8, shortGame:7.2, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.5 },
-  { name:'Nick Taylor',       flag:'🇨🇦', odds:'+19500',liv:false, debut:false, badges:[],
-    windBonus:0.5, heatBonus:0.4, firmBonus:0.5,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.5, par5:7.2, amenCorner:6.8, augustaHist:6.0, majorClutch:7.5, recentForm:7.0, sgTTG:7.5, weather:7.2, shortGame:7.2, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.5 },
-  { name:'Aaron Rai',         flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+19500',liv:false, debut:false, badges:[],
-    windBonus:0.8, heatBonus:0.2, firmBonus:0.3,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.5, par5:7.0, amenCorner:6.8, augustaHist:5.5, majorClutch:6.8, recentForm:7.5, sgTTG:7.5, weather:7.5, shortGame:7.2, bogeyAvoid:7.2, drawBias:7, bettingSignal:5.5 },
-  { name:'Brian Harman',      flag:'🇺🇸', odds:'+20000',liv:false, debut:false, badges:[],
-    windBonus:0.6, heatBonus:0.3, firmBonus:0.4,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.5, par5:7.0, amenCorner:7.5, augustaHist:7.0, majorClutch:8.0, recentForm:7.0, sgTTG:7.5, weather:7.5, shortGame:8.0, bogeyAvoid:7.5, drawBias:8, bettingSignal:5.5 },
-  { name:'Sam Stevens',       flag:'🇺🇸', odds:'+21000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.3, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.2, par5:7.0, amenCorner:6.0, augustaHist:2.0, majorClutch:6.2, recentForm:7.8, sgTTG:7.2, weather:6.8, shortGame:7.0, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.0 },
-  { name:'Sergio Garcia',     flag:'🇪🇸', odds:'+22500',liv:true,  debut:false, badges:[],
-    windBonus:0.8, heatBonus:0.3, firmBonus:0.4,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.5, par5:7.8, amenCorner:7.5, augustaHist:8.5, majorClutch:7.5, recentForm:6.5, sgTTG:7.5, weather:7.2, shortGame:8.2, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.0 },
-  { name:'Ryan Fox',          flag:'🇳🇿', odds:'+22500',liv:false, debut:false, badges:[],
-    windBonus:0.9, heatBonus:0.2, firmBonus:0.2,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.2, par5:7.5, amenCorner:6.8, augustaHist:5.5, majorClutch:6.8, recentForm:7.2, sgTTG:7.2, weather:7.5, shortGame:7.0, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.0 },
-  { name:'Wyndham Clark',     flag:'🇺🇸', odds:'+22500',liv:false, debut:false, badges:[],
-    windBonus:0.2, heatBonus:0.7, firmBonus:0.9,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:8.0, par5:8.0, amenCorner:7.0, augustaHist:6.0, majorClutch:7.8, recentForm:7.0, sgTTG:7.8, weather:7.0, shortGame:7.2, bogeyAvoid:7.2, drawBias:6, bettingSignal:6.0 },
-  { name:'Max Greyserman',    flag:'🇺🇸', odds:'+23000',liv:false, debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.5, par5:7.2, amenCorner:6.5, augustaHist:5.5, majorClutch:6.8, recentForm:7.5, sgTTG:7.5, weather:7.0, shortGame:7.2, bogeyAvoid:7.2, drawBias:7, bettingSignal:5.5 },
-  { name:'Dustin Johnson',    flag:'🇺🇸', odds:'+24000',liv:true,  debut:false, badges:['2020 champ'],
-    windBonus:0.4, heatBonus:0.5, firmBonus:0.7,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:7.0, par5:8.5, amenCorner:7.5, augustaHist:8.5, majorClutch:8.0, recentForm:6.5, sgTTG:7.5, weather:7.0, shortGame:7.0, bogeyAvoid:7.0, drawBias:8, bettingSignal:5.5 },
-  { name:'Casey Jarvis',      flag:'🇿🇦', odds:'+25000',liv:false, debut:true,  badges:['Hot','Debut'],
-    windBonus:0.5, heatBonus:0.8, firmBonus:0.9,
-    windGame:'Good', hotFirm:'Good',
-    sgApproach:7.2, par5:7.2, amenCorner:6.0, augustaHist:2.0, majorClutch:6.5, recentForm:9.0, sgTTG:7.2, weather:7.2, shortGame:7.0, bogeyAvoid:7.2, drawBias:7, bettingSignal:6.0 },
-  { name:'Carlos Ortiz',      flag:'🇲🇽', odds:'+26000',liv:true,  debut:false, badges:[],
-    windBonus:0.2, heatBonus:0.7, firmBonus:0.8,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.0, par5:7.2, amenCorner:6.5, augustaHist:6.0, majorClutch:6.5, recentForm:7.0, sgTTG:7.0, weather:6.8, shortGame:7.2, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.0 },
-  { name:'Haotong Li',        flag:'🇨🇳', odds:'+28000',liv:true,  debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:7.2, par5:7.0, amenCorner:6.5, augustaHist:6.0, majorClutch:6.5, recentForm:7.0, sgTTG:7.2, weather:6.8, shortGame:7.0, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.0 },
-  { name:'Tom McKibbin',      flag:'🇬🇧', odds:'+28000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.8, heatBonus:0.2, firmBonus:0.2,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.0, par5:7.0, amenCorner:6.2, augustaHist:2.0, majorClutch:6.2, recentForm:7.5, sgTTG:7.2, weather:7.5, shortGame:7.0, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.0 },
-  { name:'Nico Echavarria',   flag:'🇨🇴', odds:'+31000',liv:false, debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.7, firmBonus:0.8,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.2, par5:7.2, amenCorner:6.5, augustaHist:5.5, majorClutch:6.5, recentForm:7.2, sgTTG:7.2, weather:7.0, shortGame:7.2, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.0 },
-  { name:'Kristoffer Reitan', flag:'🇳🇴', odds:'+31000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.9, heatBonus:0.1, firmBonus:0.0,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.0, par5:7.0, amenCorner:6.2, augustaHist:2.0, majorClutch:6.2, recentForm:7.5, sgTTG:7.2, weather:7.8, shortGame:7.0, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.0 },
-  { name:'Rasmus Neergaard-Petersen', flag:'🇩🇰', odds:'+32500',liv:false, debut:true,  badges:['Debut'],
-    windBonus:1.0, heatBonus:0.0, firmBonus:-0.1,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:7.0, par5:7.0, amenCorner:6.0, augustaHist:2.0, majorClutch:6.0, recentForm:7.5, sgTTG:7.0, weather:8.0, shortGame:7.0, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.0 },
-  { name:'John Keefer',       flag:'🇺🇸', odds:'+34000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.3, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.8, par5:7.0, amenCorner:6.0, augustaHist:2.0, majorClutch:6.0, recentForm:7.5, sgTTG:6.8, weather:6.8, shortGame:7.0, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.0 },
-  { name:'Michael Kim',       flag:'🇺🇸', odds:'+35000',liv:false, debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.8, par5:6.8, amenCorner:6.2, augustaHist:5.5, majorClutch:6.2, recentForm:7.0, sgTTG:6.8, weather:6.8, shortGame:7.0, bogeyAvoid:6.8, drawBias:6, bettingSignal:4.5 },
-  { name:'Andrew Novak',      flag:'🇺🇸', odds:'+40000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.3, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.8, par5:7.0, amenCorner:6.0, augustaHist:2.0, majorClutch:6.0, recentForm:7.2, sgTTG:7.0, weather:6.8, shortGame:7.0, bogeyAvoid:6.8, drawBias:6, bettingSignal:5.0 },
-  { name:'Aldrich Potgieter', flag:'🇿🇦', odds:'+41000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.8, firmBonus:1.0,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:7.0, par5:7.5, amenCorner:6.0, augustaHist:2.0, majorClutch:6.0, recentForm:7.5, sgTTG:7.0, weather:6.8, shortGame:6.8, bogeyAvoid:7.0, drawBias:6, bettingSignal:5.0 },
-  { name:'Michael Brennan',   flag:'🇺🇸', odds:'+43000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.3, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.8, par5:6.8, amenCorner:6.0, augustaHist:2.0, majorClutch:6.0, recentForm:7.0, sgTTG:6.8, weather:6.8, shortGame:6.8, bogeyAvoid:6.8, drawBias:6, bettingSignal:4.5 },
-  { name:'Sami Välimäki',     flag:'🇫🇮', odds:'+52500',liv:false, debut:true,  badges:['Debut'],
-    windBonus:1.0, heatBonus:0.0, firmBonus:-0.1,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:6.8, par5:7.0, amenCorner:6.0, augustaHist:2.0, majorClutch:6.0, recentForm:7.2, sgTTG:7.0, weather:8.0, shortGame:7.0, bogeyAvoid:7.0, drawBias:7, bettingSignal:5.0 },
-  { name:'Davis Riley',       flag:'🇺🇸', odds:'+60000',liv:false, debut:false, badges:[],
-    windBonus:0.3, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:7.0, par5:7.0, amenCorner:6.2, augustaHist:5.5, majorClutch:6.2, recentForm:7.0, sgTTG:7.0, weather:6.8, shortGame:6.8, bogeyAvoid:6.8, drawBias:6, bettingSignal:4.5 },
-  { name:'Charl Schwartzel',  flag:'🇿🇦', odds:'+60000',liv:true,  debut:false, badges:['2011 champ'],
-    windBonus:0.4, heatBonus:0.5, firmBonus:0.6,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:6.8, par5:7.2, amenCorner:7.0, augustaHist:8.0, majorClutch:7.2, recentForm:6.0, sgTTG:6.8, weather:7.0, shortGame:7.5, bogeyAvoid:7.0, drawBias:7, bettingSignal:4.5 },
-  { name:'Bubba Watson',      flag:'🇺🇸', odds:'+60000',liv:false, debut:false, badges:['2× champ'],
-    windBonus:0.5, heatBonus:0.2, firmBonus:0.1,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:6.5, par5:7.5, amenCorner:7.8, augustaHist:8.5, majorClutch:7.5, recentForm:5.0, sgTTG:6.5, weather:7.0, shortGame:7.0, bogeyAvoid:6.5, drawBias:9, bettingSignal:4.0 },
-  { name:'Zach Johnson',      flag:'🇺🇸', odds:'+60000',liv:false, debut:false, badges:['2× champ'],
-    windBonus:0.5, heatBonus:0.2, firmBonus:0.3,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:6.5, par5:7.0, amenCorner:7.5, augustaHist:8.8, majorClutch:7.8, recentForm:5.0, sgTTG:6.5, weather:7.2, shortGame:8.0, bogeyAvoid:7.2, drawBias:7, bettingSignal:4.0 },
-  { name:'Brian Campbell',    flag:'🇺🇸', odds:'+250000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.5, par5:6.5, amenCorner:5.8, augustaHist:2.0, majorClutch:5.8, recentForm:6.5, sgTTG:6.5, weather:6.5, shortGame:6.5, bogeyAvoid:6.5, drawBias:6, bettingSignal:4.0 },
-  { name:'Ethan Fang',        flag:'🇺🇸', odds:'+250000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.5, par5:6.5, amenCorner:5.8, augustaHist:2.0, majorClutch:5.8, recentForm:6.5, sgTTG:6.5, weather:6.5, shortGame:6.5, bogeyAvoid:6.5, drawBias:6, bettingSignal:4.0 },
-  { name:'Danny Willett',     flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+250000',liv:false, debut:false, badges:['2016 champ'],
+    sgApproach:7.8, sgTTG:8.2, sgPutting:7.0, shortGame:7.5,
+    par5:7.5, amenCorner:6.0, augustaHist:5.0, drawBias:7.0, proximity:7.8,
+    majorClutch:7.0, sundayClose:6.8, leadChase:6.5, bogeyAvoid:7.0,
+    recentForm:8.8, lastEvent:1.05, weather:8.0, bettingSignal:6.5,
+    sandSave:7.5, caddieExp:5.5,
+  },
+  {
+    name:'Patrick Reed', flag:'🇺🇸', odds:'+9000', liv:false, debut:false,
+    badges:['2018 champ'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Healthy — won Dubai + Qatar 2026',
+    rustNote:'Active on DP World Tour',
+    lastEventNote:'T-10 recent DP World Tour',
+    riskLevel:'Medium', leadChaseNote:'Historically excellent at Augusta — best chipper in the field, elite mental game here specifically',
+    mcFloor:0.6, windGame:'Good', hotFirm:'Good',
     windBonus:0.5, heatBonus:0.3, firmBonus:0.4,
-    windGame:'Good', hotFirm:'Average',
-    sgApproach:6.5, par5:6.8, amenCorner:7.0, augustaHist:8.0, majorClutch:7.0, recentForm:5.0, sgTTG:6.5, weather:7.0, shortGame:7.2, bogeyAvoid:6.8, drawBias:7, bettingSignal:4.0 },
-  { name:'Pongsapak Laopakdee',flag:'🇹🇭', odds:'+400000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.8, firmBonus:0.8,
-    windGame:'Moderate', hotFirm:'Good',
-    sgApproach:6.2, par5:6.5, amenCorner:5.5, augustaHist:2.0, majorClutch:5.5, recentForm:6.5, sgTTG:6.2, weather:6.5, shortGame:6.5, bogeyAvoid:6.5, drawBias:6, bettingSignal:4.0 },
-  { name:'Vijay Singh',       flag:'🇫🇯', odds:'+450000',liv:false, debut:false, badges:['Legend'],
-    windBonus:0.2, heatBonus:0.4, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:5.5, par5:6.5, amenCorner:6.5, augustaHist:8.0, majorClutch:7.5, recentForm:3.0, sgTTG:5.5, weather:6.0, shortGame:7.0, bogeyAvoid:6.0, drawBias:6, bettingSignal:3.0 },
-  { name:'Mason Howell',      flag:'🇺🇸', odds:'+450000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.2, par5:6.2, amenCorner:5.5, augustaHist:2.0, majorClutch:5.5, recentForm:6.2, sgTTG:6.2, weather:6.5, shortGame:6.2, bogeyAvoid:6.2, drawBias:6, bettingSignal:3.5 },
-  { name:'Mateo Pulcini',     flag:'🇦🇷', odds:'+450000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.6, firmBonus:0.7,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.2, par5:6.2, amenCorner:5.5, augustaHist:2.0, majorClutch:5.5, recentForm:6.2, sgTTG:6.2, weather:6.5, shortGame:6.2, bogeyAvoid:6.2, drawBias:6, bettingSignal:3.5 },
-  { name:'Jackson Herrington',flag:'🇺🇸', odds:'+450000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.2, par5:6.2, amenCorner:5.5, augustaHist:2.0, majorClutch:5.5, recentForm:6.2, sgTTG:6.2, weather:6.5, shortGame:6.2, bogeyAvoid:6.2, drawBias:6, bettingSignal:3.5 },
-  { name:'Ángel Cabrera',     flag:'🇦🇷', odds:'+450000',liv:false, debut:false, badges:['2009 champ'],
-    windBonus:0.3, heatBonus:0.4, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:5.5, par5:6.5, amenCorner:6.5, augustaHist:8.0, majorClutch:7.5, recentForm:3.0, sgTTG:5.5, weather:6.0, shortGame:7.0, bogeyAvoid:5.8, drawBias:7, bettingSignal:3.0 },
-  { name:'Naoyuki Kataoka',   flag:'🇯🇵', odds:'+450000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.0, par5:6.0, amenCorner:5.5, augustaHist:2.0, majorClutch:5.5, recentForm:6.0, sgTTG:6.0, weather:6.5, shortGame:6.2, bogeyAvoid:6.2, drawBias:6, bettingSignal:3.5 },
-  { name:'Brandon Holtz',     flag:'🇺🇸', odds:'+500000',liv:false, debut:true,  badges:['Debut'],
-    windBonus:0.2, heatBonus:0.5, firmBonus:0.5,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:6.0, par5:6.2, amenCorner:5.5, augustaHist:2.0, majorClutch:5.5, recentForm:6.2, sgTTG:6.0, weather:6.5, shortGame:6.0, bogeyAvoid:6.2, drawBias:6, bettingSignal:3.5 },
-  { name:'Mike Weir',         flag:'🇨🇦', odds:'+500000',liv:false, debut:false, badges:['2003 champ'],
-    windBonus:0.2, heatBonus:0.2, firmBonus:0.3,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:5.2, par5:6.0, amenCorner:6.5, augustaHist:8.2, majorClutch:7.2, recentForm:2.5, sgTTG:5.2, weather:6.0, shortGame:7.2, bogeyAvoid:5.5, drawBias:9, bettingSignal:3.0 },
-  { name:'Fred Couples',      flag:'🇺🇸', odds:'+500000',liv:false, debut:false, badges:['1992 champ'],
-    windBonus:0.3, heatBonus:0.3, firmBonus:0.4,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:5.0, par5:6.5, amenCorner:7.0, augustaHist:9.0, majorClutch:7.5, recentForm:2.0, sgTTG:5.0, weather:6.2, shortGame:7.2, bogeyAvoid:5.5, drawBias:7, bettingSignal:3.0 },
-  { name:'José María Olazábal',flag:'🇪🇸', odds:'+500000',liv:false, debut:false, badges:['2× champ'],
-    windBonus:0.3, heatBonus:0.3, firmBonus:0.4,
-    windGame:'Moderate', hotFirm:'Average',
-    sgApproach:5.0, par5:6.2, amenCorner:7.0, augustaHist:9.2, majorClutch:8.0, recentForm:2.0, sgTTG:5.0, weather:6.2, shortGame:7.5, bogeyAvoid:5.5, drawBias:7, bettingSignal:3.0 },
+    sgApproach:7.2, sgTTG:7.0, sgPutting:7.5, shortGame:9.5,
+    par5:7.8, amenCorner:8.5, augustaHist:8.8, drawBias:7.0, proximity:7.5,
+    majorClutch:8.5, sundayClose:8.2, leadChase:8.0, bogeyAvoid:7.5,
+    recentForm:7.8, lastEvent:1.05, weather:6.8, bettingSignal:6.5,
+    sandSave:9.0, caddieExp:8.5,
+  },
+  {
+    name:'Adam Scott', flag:'🇦🇺', odds:'+7000', liv:false, debut:false,
+    badges:['2013 champ'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.0,
+    injuryNote:'Healthy at 45',
+    rustNote:'Active',
+    lastEventNote:'Neutral finish',
+    riskLevel:'Low', leadChaseNote:'Veteran — steady and experienced. Floor player',
+    mcFloor:0.5, windGame:'Good', hotFirm:'Good',
+    windBonus:0.4, heatBonus:0.4, firmBonus:0.5,
+    sgApproach:8.0, sgTTG:8.0, sgPutting:7.0, shortGame:8.0,
+    par5:7.5, amenCorner:7.5, augustaHist:8.8, drawBias:8.0, proximity:8.5,
+    majorClutch:7.2, sundayClose:7.5, leadChase:7.2, bogeyAvoid:7.8,
+    recentForm:7.2, lastEvent:1.0, weather:7.0, bettingSignal:5.5,
+    sandSave:7.8, caddieExp:9.5,
+  },
+  {
+    name:'Justin Rose', flag:'🇬🇧', odds:'+6000', liv:false, debut:false,
+    badges:[], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.05,
+    injuryNote:'Healthy — playoff loss to McIlroy in 2025 showed he\'s still major-capable',
+    rustNote:'Active — won Farmers in January 2026',
+    lastEventNote:'T-13 The Players — solid signal',
+    riskLevel:'Medium', leadChaseNote:'Can lead (5× first-round leader at Augusta) but history of heartbreak in playoffs',
+    mcFloor:0.6, windGame:'Very good', hotFirm:'Average',
+    windBonus:0.8, heatBonus:0.3, firmBonus:0.4,
+    sgApproach:8.2, sgTTG:8.0, sgPutting:7.2, shortGame:7.5,
+    par5:7.2, amenCorner:7.8, augustaHist:8.2, drawBias:8.0, proximity:8.5,
+    majorClutch:7.5, sundayClose:7.2, leadChase:7.0, bogeyAvoid:7.5,
+    recentForm:8.0, lastEvent:1.05, weather:7.8, bettingSignal:6.0,
+    sandSave:7.5, caddieExp:8.5,
+  },
+  {
+    name:'Shane Lowry', flag:'🇮🇪', odds:'+7500', liv:false, debut:false,
+    badges:[], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.0,
+    injuryNote:'Healthy',
+    rustNote:'Active',
+    lastEventNote:'T-42 recent signal — slightly negative',
+    riskLevel:'Low', leadChaseNote:'Open champion — calm under pressure but Augusta greens have historically challenged him',
+    mcFloor:0.4, windGame:'Excellent', hotFirm:'Average',
+    windBonus:1.3, heatBonus:0.1, firmBonus:0.0,
+    sgApproach:7.5, sgTTG:7.5, sgPutting:7.0, shortGame:7.8,
+    par5:7.0, amenCorner:7.2, augustaHist:7.0, drawBias:8.0, proximity:7.5,
+    majorClutch:7.8, sundayClose:7.5, leadChase:7.5, bogeyAvoid:7.5,
+    recentForm:7.2, lastEvent:1.0, weather:8.5, bettingSignal:5.5,
+    sandSave:7.5, caddieExp:7.0,
+  },
+  {
+    name:'Gary Woodland', flag:'🇺🇸', odds:'+12500', liv:false, debut:false,
+    badges:['Story'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.15,
+    injuryNote:'PTSD/brain surgery recovery — won Houston Open, emotional comeback',
+    rustNote:'Active — T-14 Valspar then Houston win',
+    lastEventNote:'Won Houston Open — 1.15× win boost',
+    riskLevel:'High', leadChaseNote:'Emotional wildcard — Augusta debut post-surgery, massive public support',
+    mcFloor:0.3, windGame:'Good', hotFirm:'Average',
+    windBonus:0.5, heatBonus:0.4, firmBonus:0.5,
+    sgApproach:6.8, sgTTG:7.0, sgPutting:6.5, shortGame:6.8,
+    par5:7.0, amenCorner:6.5, augustaHist:6.5, drawBias:6.0, proximity:7.0,
+    majorClutch:7.0, sundayClose:7.0, leadChase:6.8, bogeyAvoid:7.0,
+    recentForm:8.5, lastEvent:1.15, weather:6.8, bettingSignal:6.0,
+    sandSave:6.5, caddieExp:6.0,
+  },
+  {
+    name:'J.J. Spaun', flag:'🇺🇸', odds:'+15000', liv:false, debut:false,
+    badges:['Valero W'], injuryPenalty:1.0, rustPenalty:1.0, lastEventBoost:1.15,
+    injuryNote:'Healthy',
+    rustNote:'Won Valero the week before',
+    lastEventNote:'Won Valero — 1.15× win boost',
+    riskLevel:'High', leadChaseNote:'Limited major experience at Augusta — two starts, modest history',
+    mcFloor:0.2, windGame:'Good', hotFirm:'Good',
+    windBonus:0.3, heatBonus:0.5, firmBonus:0.5,
+    sgApproach:7.2, sgTTG:7.5, sgPutting:7.5, shortGame:7.2,
+    par5:7.0, amenCorner:6.5, augustaHist:5.5, drawBias:6.5, proximity:7.2,
+    majorClutch:6.5, sundayClose:6.8, leadChase:6.5, bogeyAvoid:7.0,
+    recentForm:8.8, lastEvent:1.15, weather:7.0, bettingSignal:6.0,
+    sandSave:7.0, caddieExp:5.5,
+  },
 ];
 
-// ── STATE ────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════
 let weights = {};
 FACTORS.forEach(f => weights[f.key] = f.def);
-let currentDay = 0, currentTab = 'leaderboard', chartInst = null;
+let currentDay = 0, currentTab = 'lb', chartInst = null;
 
-// ── MODEL ────────────────────────────────────────────────────────────────
-function composite(p) {
+// ════════════════════════════════════════════════
+//  MODEL ENGINE
+// ════════════════════════════════════════════════
+function baseScore(p) {
   const total = FACTORS.reduce((s,f) => s + weights[f.key], 0);
-  return FACTORS.reduce((s,f) => s + (p[f.key] * weights[f.key] / total), 0);
+  let raw = FACTORS.reduce((s,f) => s + (p[f.key] * weights[f.key] / total), 0);
+
+  // INTERACTION BONUSES — compound factors reward each other
+  const sgCombo = p.sgApproach > 9.0 && p.par5 > 8.5 ? 1.04 : 1.0;           // Elite approach + par5 → scoreable
+  const clutchCombo = p.majorClutch > 9.0 && p.sundayClose > 8.5 ? 1.05 : 1.0; // Elite clutch + closing → compounding
+  const histCombo = p.augustaHist > 9.0 && p.amenCorner > 9.0 ? 1.04 : 1.0;   // Deep history + Amen Corner mastery
+  const debutPenalty = p.debut ? 0.78 : 1.0;                                   // First-timer hex (-22%)
+
+  raw *= sgCombo * clutchCombo * histCombo * debutPenalty;
+  raw *= p.injuryPenalty * p.rustPenalty * p.lastEventBoost;
+  return Math.max(0.01, raw);
 }
-function normalize(raw) {
-  const sum = raw.reduce((a,b) => a+b, 0);
-  const target = PLAYERS.reduce((s,p) => s + composite(p), 0) / PLAYERS.length * 3;
-  return raw.map(v => (v / sum) * target);
+
+// Monte Carlo: add per-player variance to simulate 10,000 outcomes
+function monteCarlo(players, n = 10000) {
+  const wins = new Array(players.length).fill(0);
+  const varianceMap = {
+    'Very High': 0.35,
+    'High': 0.22,
+    'Medium': 0.14,
+    'Low': 0.08,
+  };
+  for (let i = 0; i < n; i++) {
+    const scores = players.map(p => {
+      const v = varianceMap[p.riskLevel] || 0.14;
+      const noise = 1 + (Math.random() * 2 - 1) * v;
+      return Math.max(0, baseScore(p) * noise);
+    });
+    const max = Math.max(...scores);
+    const winner = scores.indexOf(max);
+    wins[winner]++;
+  }
+  return wins.map(w => (w / n) * 100);
 }
+
+let cachedProbs = null;
+let cacheKey = '';
+
 function getProbs() {
-  const raw = PLAYERS.map(p => Math.pow(composite(p), 3.5));
-  const sum = raw.reduce((a,b) => a+b, 0);
-  return raw.map(s => (s/sum)*100);
+  const key = JSON.stringify(weights);
+  if (key !== cacheKey) {
+    cachedProbs = monteCarlo(PLAYERS);
+    cacheKey = key;
+  }
+  return cachedProbs;
 }
+
 function getWeatherProbs() {
   const d = DAYS[currentDay];
-  const raw = PLAYERS.map(p => {
-    const base = Math.pow(composite(p), 3.5);
+  const adjusted = PLAYERS.map(p => {
+    const base = baseScore(p);
     const wBonus = d.wind > 10 ? p.windBonus : d.wind > 6 ? p.windBonus * 0.5 : 0;
     const hBonus = p.heatBonus * d.heat * 0.35;
     const fBonus = p.firmBonus * d.firm * 0.28;
-    return Math.max(0.01, base * (1 + (wBonus + hBonus + fBonus) * 0.04));
+    const adj = Object.assign({}, p, { _adj: base * (1 + (wBonus + hBonus + fBonus) * 0.04) });
+    return adj;
   });
-  const sum = raw.reduce((a,b) => a+b, 0);
-  return raw.map(s => (s/sum)*100);
+  // run quick MC with adjusted scores
+  const n = 5000;
+  const wins = new Array(PLAYERS.length).fill(0);
+  const varMap = { 'Very High':0.35,'High':0.22,'Medium':0.14,'Low':0.08 };
+  for (let i = 0; i < n; i++) {
+    const scores = adjusted.map(p => {
+      const v = varMap[p.riskLevel] || 0.14;
+      return Math.max(0, p._adj * (1 + (Math.random()*2-1)*v));
+    });
+    wins[scores.indexOf(Math.max(...scores))]++;
+  }
+  return wins.map(w => (w/n)*100);
 }
 
-// ── NAV ──────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════
+//  NAV
+// ════════════════════════════════════════════════
 function setTab(t) {
   currentTab = t;
-  document.querySelectorAll('.tab-btn').forEach((el,i) =>
-    el.classList.toggle('active', ['leaderboard','breakdown','weather','weights','chart'][i] === t));
-  ['leaderboard','breakdown','weather','weights','chart'].forEach(id =>
-    document.getElementById('view-'+id).style.display = t===id ? '' : 'none');
-  if(t==='breakdown') initBreakdown();
+  const keys = ['lb','weather','bd','risk','weights','chart'];
+  document.querySelectorAll('.tbtn').forEach((el,i) => el.classList.toggle('active', keys[i] === t));
+  keys.forEach(id => document.getElementById('view-'+id).style.display = t===id?'':'none');
+  if(t==='bd') initBD();
   if(t==='weights') renderWeights();
   if(t==='chart') drawChart();
   if(t==='weather') renderWeather();
+  if(t==='risk') renderRisk();
 }
 
-function selectDay(d) {
+function selDay(d) {
   currentDay = d;
-  document.querySelectorAll('.weather-day').forEach((el,i) => el.classList.toggle('active', i===d));
+  document.querySelectorAll('.wday').forEach((el,i) => el.classList.toggle('active', i===d));
   if(currentTab==='weather') renderWeather();
 }
 
-// ── LEADERBOARD ──────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════
+//  LEADERBOARD
+// ════════════════════════════════════════════════
 function renderLB() {
   const q = document.getElementById('srch').value.toLowerCase();
   const f = document.getElementById('filt').value;
   const s = document.getElementById('srt').value;
   const probs = getProbs();
-  const rankOrder = [...PLAYERS].map((p,i) => ({p, prob:probs[i]})).sort((a,b) => b.prob-a.prob);
-  const rankMap = {}; rankOrder.forEach((x,i) => rankMap[x.p.name] = i+1);
 
-  let data = PLAYERS.map((p,i) => ({...p, prob:probs[i]})).filter(p => {
+  const allSorted = [...PLAYERS].map((p,i) => ({...p,prob:probs[i]})).sort((a,b) => b.prob-a.prob);
+  const rankMap = {}; allSorted.forEach((p,i) => rankMap[p.name] = i+1);
+
+  let data = allSorted.filter(p => {
     if(q && !p.name.toLowerCase().includes(q)) return false;
     if(f==='liv' && !p.liv) return false;
     if(f==='debut' && !p.debut) return false;
+    if(f==='injured' && p.injuryPenalty >= 0.97) return false;
     if(f==='sleeper' && parseInt(p.odds.replace('+','')) < 3000) return false;
+    if(f==='top10') return rankMap[p.name] <= 10;
     return true;
   });
 
-  data.sort((a,b) => s==='name' ? a.name.localeCompare(b.name) : s==='model' ? b.prob-a.prob : b[s]-a[s]);
-  if(f==='top10') data = data.sort((a,b) => b.prob-a.prob).slice(0,10);
+  if(s !== 'prob') data.sort((a,b) => b[s] - a[s]);
 
-  const maxProb = Math.max(...data.map(d=>d.prob));
+  const maxP = Math.max(...data.map(d=>d.prob));
+  const riskColor = { 'Low':'#1a5c35','Medium':var_amber(),'High':var_red(),'Very High':'#6a0000' };
 
   document.getElementById('lb-body').innerHTML = data.map(p => {
     const rank = rankMap[p.name];
-    const bar = Math.round(p.prob / maxProb * 100);
-    const barCol = rank<=3 ? '#2d5a3d' : rank<=7 ? '#4a8a60' : '#7ab898';
+    const bar = Math.round(p.prob/maxP*100);
+    const barCol = rank<=3?'#1a3a2a':rank<=7?'#2d5a3d':'#4a8a60';
+
     const badges = p.badges.map(b => {
-      const cls = b.includes('champ')||b==='Defending'?'badge-green':b==='Hot'||b.includes('W')?'badge-gold':b==='Lefty'?'badge-blue':'badge-gray';
-      return `<span class="badge ${cls}">${b}</span>`;
+      const cls = b.includes('champ')||b==='Defending'?'bdg-g':b==='Hot'||b.includes('W')||b==='Story'?'bdg-a':b==='Lefty'?'bdg-b':'bdg-k';
+      return `<span class="bdg ${cls}">${b}</span>`;
     }).join('');
-    const livBadge = p.liv ? `<span class="badge badge-gray">LIV</span>` : '';
-    const debutBadge = p.debut ? `<span class="badge badge-red">Debut</span>` : '';
-    const acCls = p.amenCorner>=8.5?'stat-good':p.amenCorner>=7?'stat-neu':'stat-bad';
-    const p5Cls = p.par5>=8.5?'stat-good':p.par5>=7.5?'stat-neu':'stat-bad';
-    const clCls = p.majorClutch>=9?'stat-good':p.majorClutch>=7.5?'stat-neu':'stat-bad';
-    const wtCls = p.weather>=8.5?'stat-good':p.weather>=7?'stat-neu':'stat-bad';
+    const livBdg = p.liv?`<span class="bdg bdg-k">LIV</span>`:'';
+    const debutBdg = p.debut?`<span class="bdg bdg-r">Debut</span>`:'';
+    const injBdg = p.injuryPenalty<0.95?`<span class="bdg bdg-inj">⚕ Inj</span>`:'';
+    const rustBdg = p.rustPenalty<0.92?`<span class="bdg bdg-rust">⏱ Rust</span>`:'';
+
+    const p5Cls = p.par5>=8.5?'sg-g':p.par5>=7.5?'':p.par5<7?'sg-b':'';
+    const putCls = p.sgPutting>=7.5?'sg-g':p.sgPutting>=6.0?'':p.sgPutting<5.5?'sg-b':'';
+    const sunCls = p.sundayClose>=8.5?'sg-g':p.sundayClose>=7?'':p.sundayClose<6.5?'sg-b':'';
+
+    const rDot = `<div class="rdot" style="background:${riskColor[p.riskLevel]||'#888'}"></div>`;
+
     return `<tr>
-      <td class="td-rank ${rank<=3?'top3':''}">${rank}</td>
-      <td><div class="player-cell">
-        <span class="player-flag">${p.flag}</span>
-        <span class="player-name">${p.name}</span>
-        ${badges}${livBadge}${debutBadge}
+      <td class="rk ${rank<=3?'t3':''}">${rank}</td>
+      <td><div class="pcell">
+        <span class="pflag">${p.flag}</span>
+        <span class="pname">${p.name}</span>
+        ${badges}${livBdg}${debutBdg}${injBdg}${rustBdg}
       </div></td>
-      <td><div class="prob-cell">
-        <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${bar}%;background:${barCol}"></div></div>
-        <span class="prob-num">${p.prob.toFixed(1)}%</span>
+      <td><div class="pbarcell">
+        <div class="pbbg"><div class="pbfill" style="width:${bar}%;background:${barCol}"></div></div>
+        <span class="pnum">${p.prob.toFixed(1)}%</span>
       </div></td>
-      <td class="odds-cell hide-sm">${p.odds}</td>
-      <td class="hide-sm ${p5Cls}">${p.par5.toFixed(1)}</td>
-      <td class="hide-sm ${acCls}">${p.amenCorner.toFixed(1)}</td>
-      <td class="hide-sm ${clCls}">${p.majorClutch.toFixed(1)}</td>
-      <td class="hide-sm ${wtCls}">${p.weather.toFixed(1)}</td>
+      <td class="oddsc hs">${p.odds}</td>
+      <td class="sg hs ${p5Cls}">${p.par5.toFixed(1)}</td>
+      <td class="sg hs ${putCls}">${p.sgPutting.toFixed(1)}</td>
+      <td class="sg hs ${sunCls}">${p.sundayClose.toFixed(1)}</td>
+      <td class="hs"><div class="risk-cell">${rDot}<span style="font-size:10px;color:var(--text-muted)">${p.riskLevel}</span></div></td>
     </tr>`;
   }).join('');
 }
 
-// ── BREAKDOWN ────────────────────────────────────────────────────────────
-function initBreakdown() {
-  const sel = document.getElementById('sel-player');
-  if(sel.options.length > 0) { renderBreakdown(); return; }
-  const probs = getProbs();
-  [...PLAYERS].map((p,i)=>({p,prob:probs[i]})).sort((a,b)=>b.prob-a.prob).forEach(({p}) => {
-    const o = document.createElement('option');
-    o.value = p.name; o.textContent = p.name;
-    sel.appendChild(o);
-  });
-  renderBreakdown();
-}
+function var_amber(){return '#7a5a10'}
+function var_red(){return '#8b1a1a'}
 
-function renderBreakdown() {
-  const name = document.getElementById('sel-player').value;
-  const p = PLAYERS.find(x => x.name===name);
-  if(!p) return;
-  const probs = getProbs();
-  const prob = probs[PLAYERS.indexOf(p)];
-  const total = FACTORS.reduce((s,f) => s+weights[f.key], 0);
-
-  const rows = FACTORS.map(f => {
-    const v = p[f.key];
-    const contrib = (v * weights[f.key] / total);
-    const cls = v>=8.5?'stat-good':v>=7?'stat-neu':'stat-bad';
-    const barW = Math.round(v * 8.5);
-    const wPct = Math.round(weights[f.key]/total*100);
-    return `<div class="factor-row">
-      <div class="factor-info">
-        <div class="factor-name">${f.label} <span style="font-size:10px;color:var(--text-light);font-weight:400">(${wPct}% weight)</span></div>
-        <div class="factor-desc">${f.desc}</div>
-      </div>
-      <div class="factor-right">
-        <div class="factor-bar-bg"><div class="factor-bar-fill" style="width:${barW}px"></div></div>
-        <span class="factor-score ${cls}">${v.toFixed(1)}</span>
-        <span class="factor-contrib">+${contrib.toFixed(2)}</span>
-      </div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('breakdown-content').innerHTML = `
-    <div class="bd-header">
-      <div>
-        <div style="font-size:11px;opacity:.5;margin-bottom:4px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase">Player analysis</div>
-        <div class="bd-name">${p.flag} ${p.name}</div>
-        <div style="font-size:12px;opacity:.5;margin-top:4px">${p.odds} · ${p.liv?'LIV Golf':'PGA Tour'}${p.debut?' · Augusta debut':''}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:11px;opacity:.5;margin-bottom:4px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase">Win probability</div>
-        <div class="bd-prob">${prob.toFixed(1)}%</div>
-      </div>
-    </div>
-    ${rows}`;
-}
-
-// ── WEATHER ──────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════
+//  WEATHER
+// ════════════════════════════════════════════════
 function renderWeather() {
-  const filt = document.getElementById('weather-filt').value;
+  const filt = document.getElementById('wfilt').value;
   const baseProbs = getProbs();
   const adjProbs = getWeatherProbs();
-  const dayLabels = ['Thu R1 — Breezy','Fri R2 — Warm','Sat R3 — Hot & calm','Sun R4 — Hot & fast'];
-  const windRating = ['Elite','Outstanding','Excellent','Very good'].includes;
 
-  let data = PLAYERS.map((p,i) => ({...p, base:baseProbs[i], adj:adjProbs[i], delta:adjProbs[i]-baseProbs[i]}))
+  let data = PLAYERS.map((p,i) => ({...p,base:baseProbs[i],adj:adjProbs[i],delta:adjProbs[i]-baseProbs[i]}))
     .sort((a,b) => b.adj-a.adj);
-  if(filt==='top15') data = data.slice(0,15);
+  if(filt==='top15') data=data.slice(0,15);
+  const maxA = Math.max(...data.map(d=>d.adj));
 
-  const maxAdj = Math.max(...data.map(d=>d.adj));
   document.getElementById('weather-body').innerHTML = data.map((p,i) => {
-    const bar = Math.round(p.adj/maxAdj*100);
-    const delta = p.delta;
-    const deltaHtml = Math.abs(delta)<0.15 ? `<span class="delta-ne">—</span>` :
-      delta>0 ? `<span class="delta-up">▲ +${delta.toFixed(1)}%</span>` :
-                `<span class="delta-dn">▼ ${delta.toFixed(1)}%</span>`;
-    const dIdx = currentDay;
-    const edge = dIdx===0&&['World-class','Outstanding','Excellent'].includes(p.windGame)?'💨 Wind edge':
-                 dIdx>=2&&p.hotFirm==='Excellent'?'🌡️ Power edge':
-                 p.amenCorner>=8.5?'🎯 Amen Corner':
-                 p.shortGame>=8.8?'🏌️ Short game':'—';
+    const bar = Math.round(p.adj/maxA*100);
+    const d = p.delta;
+    const dHtml = Math.abs(d)<0.2?`<span class="weath-delta-ne">—</span>`:
+      d>0?`<span class="weath-delta-up">▲ +${d.toFixed(1)}%</span>`:
+           `<span class="weath-delta-dn">▼ ${d.toFixed(1)}%</span>`;
+    const edge = currentDay===0&&['World-class','Outstanding','Excellent'].includes(p.windGame)?'💨 Wind edge':
+                 currentDay>=2&&p.hotFirm==='Excellent'?'🌡 Power edge':
+                 p.amenCorner>=9.0?'🎯 Amen Corner':
+                 p.shortGame>=9.0?'🏌 Short game':'—';
     return `<tr>
-      <td class="td-rank ${i<3?'top3':''}">${i+1}</td>
-      <td><div class="player-cell"><span class="player-flag">${p.flag}</span><span class="player-name">${p.name}</span></div></td>
-      <td><div class="prob-cell">
-        <div class="prob-bar-bg"><div class="prob-bar-fill" style="width:${bar}%"></div></div>
-        <span class="prob-num">${p.adj.toFixed(1)}%</span>
-      </div></td>
-      <td class="hide-sm">${deltaHtml}</td>
-      <td class="hide-sm" style="font-size:12px;color:var(--text-muted)">${p.windGame}</td>
-      <td class="hide-sm" style="font-size:12px;color:var(--text-muted)">${p.hotFirm}</td>
-      <td class="hide-sm" style="font-size:12px;color:var(--text-muted)">${edge}</td>
+      <td class="rk ${i<3?'t3':''}">${i+1}</td>
+      <td><div class="pcell"><span class="pflag">${p.flag}</span><span class="pname">${p.name}</span></div></td>
+      <td><div class="pbarcell"><div class="pbbg"><div class="pbfill" style="width:${bar}%"></div></div><span class="pnum">${p.adj.toFixed(1)}%</span></div></td>
+      <td class="hs">${dHtml}</td>
+      <td class="sg hs" style="color:var(--text-muted)">${p.windGame}</td>
+      <td class="sg hs" style="color:var(--text-muted)">${p.hotFirm}</td>
+      <td class="sg hs" style="color:var(--text-muted)">${edge}</td>
     </tr>`;
   }).join('');
 }
 
-// ── WEIGHTS ──────────────────────────────────────────────────────────────
-function renderWeights() {
-  const total = FACTORS.reduce((s,f) => s+weights[f.key], 0);
-  document.getElementById('weight-grid').innerHTML = FACTORS.map(f => {
-    const pct = Math.round(weights[f.key]/total*100);
-    return `<div class="weight-card">
-      <div class="weight-label">${f.label}</div>
-      <div class="weight-sub">${f.desc}</div>
-      <div class="weight-row">
-        <input type="range" min="0" max="30" step="1" value="${weights[f.key]}"
-          oninput="updateWeight('${f.key}',+this.value,this)"/>
-        <span class="weight-pct" id="wpct-${f.key}">${pct}%</span>
-      </div>
-    </div>`;
+// ════════════════════════════════════════════════
+//  RISK PROFILES
+// ════════════════════════════════════════════════
+function renderRisk() {
+  const probs = getProbs();
+  const data = [...PLAYERS].map((p,i)=>({...p,prob:probs[i]})).sort((a,b)=>b.prob-a.prob);
+  const rColors = {'Low':'#1a5c35','Medium':var_amber(),'High':var_red(),'Very High':'#6a0000'};
+  document.getElementById('risk-body').innerHTML = data.map((p,i)=>{
+    const dot = `<div class="rdot" style="background:${rColors[p.riskLevel]||'#888'}"></div>`;
+    const injHtml = p.injuryPenalty<0.97?`<span class="bdg bdg-inj">${Math.round((1-p.injuryPenalty)*100)}% pen</span>`:`<span style="font-size:10px;color:var(--text-light)">Healthy</span>`;
+    const sunCls = p.sundayClose>=8.5?'sg-g':p.sundayClose<6.5?'sg-b':'sg-n';
+    const lcCls = p.leadChase>=8.5?'sg-g':p.leadChase<6.5?'sg-b':'sg-n';
+    return `<tr>
+      <td class="rk ${i<3?'t3':''}">${i+1}</td>
+      <td><div class="pcell"><span class="pflag">${p.flag}</span><span class="pname">${p.name}</span></div></td>
+      <td><div class="pbarcell"><span class="pnum">${p.prob.toFixed(1)}%</span></div></td>
+      <td><div class="risk-cell">${dot}<span style="font-size:11px;font-weight:500;color:${rColors[p.riskLevel]}">${p.riskLevel}</span></div></td>
+      <td class="hs">${injHtml}</td>
+      <td class="hs sg ${sunCls}">${p.sundayClose.toFixed(1)}</td>
+      <td class="hs" style="font-size:10px;color:var(--text-muted)">${p.leadChaseNote.substring(0,40)}…</td>
+      <td class="hs" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--green-mid)">${p.mcFloor.toFixed(1)}%</td>
+    </tr>`;
   }).join('');
 }
 
-function updateWeight(key, val) {
-  weights[key] = val;
-  const total = FACTORS.reduce((s,f) => s+weights[f.key], 0);
-  FACTORS.forEach(f => {
-    const el = document.getElementById('wpct-'+f.key);
-    if(el) el.textContent = Math.round(weights[f.key]/total*100)+'%';
+// ════════════════════════════════════════════════
+//  FACTOR BREAKDOWN
+// ════════════════════════════════════════════════
+function initBD() {
+  const sel = document.getElementById('bdsel');
+  if(sel.options.length>0){renderBD();return;}
+  const probs=getProbs();
+  [...PLAYERS].map((p,i)=>({p,prob:probs[i]})).sort((a,b)=>b.prob-a.prob).forEach(({p})=>{
+    const o=document.createElement('option');o.value=p.name;o.textContent=p.name;sel.appendChild(o);
   });
-  renderLB();
-  if(currentTab==='breakdown') renderBreakdown();
-  if(currentTab==='chart') drawChart();
+  renderBD();
 }
 
-function resetWeights() {
-  FACTORS.forEach(f => weights[f.key] = f.def);
-  renderWeights();
-  renderLB();
-  if(currentTab==='chart') drawChart();
+function renderBD() {
+  const name=document.getElementById('bdsel').value;
+  const p=PLAYERS.find(x=>x.name===name);if(!p)return;
+  const probs=getProbs();
+  const prob=probs[PLAYERS.indexOf(p)];
+  const total=FACTORS.reduce((s,f)=>s+weights[f.key],0);
+
+  // Group rows by category
+  const groups = [...new Set(FACTORS.map(f=>f.group))];
+  let factorHTML = '';
+  groups.forEach(g => {
+    factorHTML += `<div class="shd">${g}</div>`;
+    FACTORS.filter(f=>f.group===g).forEach(f => {
+      const v=p[f.key], contrib=(v*weights[f.key]/total);
+      const cls=v>=8.5?'sg-g':v>=7?'sg-n':'sg-b';
+      const barW=Math.round(v*8);
+      const wPct=Math.round(weights[f.key]/total*100);
+      factorHTML+=`<div class="frow">
+        <div class="finfo">
+          <div class="fname">${f.label} <span style="font-size:9px;color:var(--text-light);font-weight:400">(${wPct}% weight)</span></div>
+          <div class="fdesc">${f.desc}</div>
+        </div>
+        <div class="fright">
+          <div class="fbarbg"><div class="fbarfill" style="width:${barW}px"></div></div>
+          <span class="fscore ${cls}">${v.toFixed(1)}</span>
+          <span class="fcontrib">+${contrib.toFixed(2)}</span>
+        </div>
+      </div>`;
+    });
+  });
+
+  // Penalties/bonuses panel
+  const injPct = Math.round((1-p.injuryPenalty)*100);
+  const rustPct = Math.round((1-p.rustPenalty)*100);
+  const lastBoost = p.lastEventBoost > 1.0 ? `+${Math.round((p.lastEventBoost-1)*100)}%` :
+                    p.lastEventBoost < 1.0 ? `${Math.round((p.lastEventBoost-1)*100)}%` : 'neutral';
+  const lastCls = p.lastEventBoost>1?'bonus-note':p.lastEventBoost<1?'penalty-note':'';
+
+  document.getElementById('bd-content').innerHTML = `
+    <div class="bdhdr">
+      <div>
+        <div style="font-size:10px;opacity:.45;margin-bottom:3px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase">2026 full model — factor analysis</div>
+        <div class="bdname">${p.flag} ${p.name}</div>
+        <div style="font-size:11px;opacity:.5;margin-top:4px">${p.odds} · ${p.liv?'LIV Golf':'PGA Tour'}${p.debut?' · Augusta debut':''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;opacity:.45;margin-bottom:3px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase">Monte Carlo win prob</div>
+        <div class="bdprob">${prob.toFixed(1)}%</div>
+        <div style="font-size:10px;opacity:.5;margin-top:4px">Risk: ${p.riskLevel} · Floor: ${p.mcFloor}%</div>
+      </div>
+    </div>
+    <div class="shd">Multipliers applied outside factor weights</div>
+    <div class="frow">
+      <div class="finfo"><div class="fname">Injury multiplier</div><div class="fdesc">${p.injuryNote}</div></div>
+      <div class="fright">${injPct>3?`<span class="penalty-note">−${injPct}% penalty</span>`:`<span class="bonus-note">Healthy</span>`}</div>
+    </div>
+    <div class="frow">
+      <div class="finfo"><div class="fname">Competitive rust multiplier</div><div class="fdesc">${p.rustNote}</div></div>
+      <div class="fright">${rustPct>3?`<span class="penalty-note">−${rustPct}% penalty</span>`:`<span class="bonus-note">Fresh</span>`}</div>
+    </div>
+    <div class="frow">
+      <div class="finfo"><div class="fname">Last event signal</div><div class="fdesc">${p.lastEventNote}</div></div>
+      <div class="fright"><span class="${lastCls||'sg-n'}" style="font-size:11px;font-weight:500">${lastBoost}</span></div>
+    </div>
+    <div class="frow">
+      <div class="finfo"><div class="fname">Lead/chase profile</div><div class="fdesc">${p.leadChaseNote}</div></div>
+      <div class="fright"><span style="font-size:11px;color:var(--text-muted)">${p.leadChase.toFixed(1)}/10</span></div>
+    </div>
+    ${factorHTML}`;
 }
 
-// ── CHART ────────────────────────────────────────────────────────────────
-function drawChart() {
-  const probs = getProbs();
-  const sorted = [...PLAYERS].map((p,i)=>({name:p.name.split(' ').pop(), full:p.name, prob:probs[i]}))
+// ════════════════════════════════════════════════
+//  WEIGHTS
+// ════════════════════════════════════════════════
+function renderWeights() {
+  const total=FACTORS.reduce((s,f)=>s+weights[f.key],0);
+  // Group by category
+  const groups=[...new Set(FACTORS.map(f=>f.group))];
+  let html='';
+  groups.forEach(g=>{
+    html+=`<div style="grid-column:1/-1"><div class="shd" style="margin-top:10px">${g}</div></div>`;
+    FACTORS.filter(f=>f.group===g).forEach(f=>{
+      html+=`<div class="wcard">
+        <div class="wlbl">${f.label}</div>
+        <div class="wsub">${f.desc.substring(0,80)}…</div>
+        <div class="wrow">
+          <input type="range" min="0" max="25" step="1" value="${weights[f.key]}" oninput="updateW('${f.key}',+this.value)"/>
+          <span class="wpct" id="wpct-${f.key}">${Math.round(weights[f.key]/total*100)}%</span>
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('wgrid').innerHTML=html;
+}
+
+function updateW(key,val){
+  weights[key]=val;
+  cachedProbs=null; cacheKey='';
+  const total=FACTORS.reduce((s,f)=>s+weights[f.key],0);
+  FACTORS.forEach(f=>{const el=document.getElementById('wpct-'+f.key);if(el)el.textContent=Math.round(weights[f.key]/total*100)+'%'});
+  renderLB();
+  if(currentTab==='bd') renderBD();
+  if(currentTab==='chart') drawChart();
+}
+function resetWeights(){FACTORS.forEach(f=>weights[f.key]=f.def);cachedProbs=null;cacheKey='';renderWeights();renderLB();}
+
+// ════════════════════════════════════════════════
+//  CHART
+// ════════════════════════════════════════════════
+function drawChart(){
+  const probs=getProbs();
+  const sorted=[...PLAYERS].map((p,i)=>({name:p.name.split(' ').pop(),full:p.name,prob:probs[i],floor:p.mcFloor}))
     .sort((a,b)=>b.prob-a.prob).slice(0,15);
-
   if(chartInst){chartInst.destroy();chartInst=null;}
-  chartInst = new Chart(document.getElementById('mainChart'), {
-    type: 'bar',
-    data: {
-      labels: sorted.map(p=>p.name),
-      datasets:[{
-        label: 'Win probability (%)',
-        data: sorted.map(p=>+p.prob.toFixed(1)),
-        backgroundColor: sorted.map((_,i)=>i<1?'#1a3a2a':i<3?'#2d5a3d':i<7?'#4a8a60':'#a0c8a8'),
-        borderRadius: 4,
-      }]
+  chartInst=new Chart(document.getElementById('mainChart'),{
+    type:'bar',
+    data:{
+      labels:sorted.map(p=>p.name),
+      datasets:[
+        {
+          label:'Win probability (%)',
+          data:sorted.map(p=>+p.prob.toFixed(1)),
+          backgroundColor:sorted.map((_,i)=>i<1?'#1a3a2a':i<3?'#2d5a3d':i<7?'#4a8a60':'#7aaa88'),
+          borderRadius:4,
+        },
+        {
+          label:'MC Floor (%)',
+          data:sorted.map(p=>+p.floor.toFixed(1)),
+          backgroundColor:'rgba(201,168,76,0.35)',
+          borderRadius:4,
+        }
+      ]
     },
     options:{
-      responsive:true, maintainAspectRatio:false,
+      responsive:true,maintainAspectRatio:false,
       plugins:{
-        legend:{display:false},
-        tooltip:{
-          callbacks:{
-            title: items => sorted[items[0].dataIndex].full,
-            label: c => `Win probability: ${c.raw}%`
-          }
-        }
+        legend:{position:'top',labels:{boxWidth:10,font:{size:10,family:'DM Mono'},padding:12}},
+        tooltip:{callbacks:{
+          title:items=>sorted[items[0].dataIndex].full,
+          label:c=>`${c.dataset.label}: ${c.raw}%`
+        }}
       },
       scales:{
-        y:{beginAtZero:true, ticks:{callback:v=>v+'%', font:{size:11, family:'DM Mono'}}, grid:{color:'rgba(0,0,0,0.04)'}},
-        x:{ticks:{font:{size:10, family:'DM Mono'}, maxRotation:45, autoSkip:false}, grid:{display:false}}
+        y:{beginAtZero:true,ticks:{callback:v=>v+'%',font:{size:10,family:'DM Mono'}},grid:{color:'rgba(0,0,0,.04)'}},
+        x:{ticks:{font:{size:10,family:'DM Mono'},maxRotation:45,autoSkip:false},grid:{display:false}}
       }
     }
   });
+
+  // Factor weight bars
+  const total=FACTORS.reduce((s,f)=>s+weights[f.key],0);
+  document.getElementById('factor-bars').innerHTML=FACTORS.map(f=>{
+    const pct=Math.round(weights[f.key]/total*100);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;flex:1;color:var(--text-muted)">${f.label}</div>
+      <div style="height:3px;width:${pct*4}px;background:var(--green-light);border-radius:2px;flex-shrink:0"></div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-light);min-width:28px;text-align:right">${pct}%</div>
+    </div>`;
+  }).join('');
 }
 
-// ── INIT ─────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
 renderLB();
 </script>
 </body>
